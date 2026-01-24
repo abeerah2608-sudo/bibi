@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import 'onboarding_page_2.dart';
 
@@ -14,131 +12,90 @@ class OnboardingPage1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = LanguageStrings.getTranslation(language, 'hello');
-    final subtitle = LanguageStrings.getTranslation(language, 'welcome_to_bibi');
-    final skipText = LanguageStrings.getTranslation(language, 'skip');
-    final nextText = LanguageStrings.getTranslation(language, 'next');
+    final title = LanguageStrings.getTranslation(language, 'assalam_o_alaikum');
+    final isUrdu = language == 'اردو';
 
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE6ED), Color(0xFFfffdfd)],
-          ),
+           color: Color(0xFFFFF4F4),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+        child: Column(
+          children: [
+            SizedBox(height: 60),
+
+            Image.asset(
+              'assets/images/Bibi_Logo_Vector 1.png',
+              height: 100,
+              width: 100,
+            ),
+
+            Expanded(
+              child: Stack(
                 children: [
-                  // BIBI Logo
-                  Image.asset(
-                    'assets/images/Bibi_Logo_Vector 1.png',
-                    height: 60,
-                    width: 60,
-                  ),
-                  SizedBox(height: 24),
-
-                  // Illustration
-                  Image.asset(
-                    'assets/images/ms_bibi.png',
-                    height: 200,
-                    fit: BoxFit.contain,
-                  ),
-                  SizedBox(height: 32),
-
-                  // Title
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF8B5E3C),
+                  // Image aligned to left edge, slightly above center
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Transform.translate(
+                      offset: Offset(0, -40),
+                      child: Image.asset(
+                        'assets/images/ms_bibi.png',
+                        height: 450,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                  SizedBox(height: 8),
 
-                  // Subtitle
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF8B6F47),
+                  // Text on top of image, in blank space
+                  Positioned(
+                    top: 150,
+                    left: MediaQuery.of(context).size.width * 0.5 + 16,
+                    right: 16,
+                    child: Directionality(
+                      textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: 'Edu',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF8B5E3C),
+                        ),
+                      ),
                     ),
                   ),
-                  SizedBox(height: 48),
 
-                  // Navigation Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Skip Button
-                      OutlinedButton(
-                        onPressed: () {
-                          // Skip logic
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: Color(0xFFE85B99),
-                            width: 2,
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: Text(
-                          skipText,
-                          style: TextStyle(
-                            color: Color(0xFFE85B99),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      // Next Button
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => OnboardingPage2(
-                                language: language,
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFE85B99),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: Text(
-                          nextText,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                 Positioned(
+  bottom: 24,
+  right: 24,
+  child: ElevatedButton(
+    onPressed: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => OnboardingPage2(language: language),
+        ),
+      );
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Color(0xFFE86A8D),
+      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 12), 
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20 ),
+      ),
+    ),
+    child: Icon(
+      Icons.arrow_forward,
+      color: Colors.white, 
+      size: 24,
+    ),
+  ),
+),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

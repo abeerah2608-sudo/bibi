@@ -2,8 +2,9 @@ class LanguageStrings {
   static const Map<String, String> english = {
     'hello': 'Hello',
     'welcome_to_bibi': 'Welcome to BIBI',
-    'im_bibi': "I'm Bibi",
-    'your_personal_shopping_assistant': 'Your personal shopping assistant',
+    'im_bibi': "I'm [b]Bibi[/b]",
+    'assalam_o_alaikum': 'Assalam-o-Alaikum!',
+    'breast_cancer': "Breast Cancer [b]Survivor[/b]",
     'smart_shopping_summaries': 'Smart Shopping Summaries',
     'make_smarter_purchase_decisions': 'Make smarter purchase decisions',
     'life_is_too_short': 'Life is too short for bad choices',
@@ -16,9 +17,9 @@ class LanguageStrings {
 
   static const Map<String, String> urdu = {
     'hello': 'اسلام علیکم',
-    'welcome_to_bibi': 'خوش آمدید',
-    'im_bibi': 'میں Bibi ہوں',
-    'your_personal_shopping_assistant': 'آپ کی ذاتی خریداری کی معاون',
+    'im_bibi': 'میں [b]بِبی[/b] ہوں',
+    'assalam_o_alaikum': 'السلام علیکم!',
+    'breast_cancer': 'بریسٹ کینسر سے صحتیاب ہونے والی مریضہ',
     'smart_shopping_summaries': 'سمارٹ شاپنگ سمریز',
     'make_smarter_purchase_decisions': 'اپنی خریداری کو بہتر بنائیں',
     'life_is_too_short': 'زندگی بہت مختصر ہے برے انتخاب کے لیے',

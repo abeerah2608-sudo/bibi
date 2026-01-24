@@ -30,3 +30,9 @@ flutter:
           weight: 600
         - asset: assets/fonts/DMSans_18pt-SemiBold.ttf
           weight: 700
+    - family: Edu 
+      fonts:
+        - asset: assets/fonts/EduAUVICWANTHand-SemiBold.ttf
+          weight: 400
+        - asset: assets/fonts/EduAUVICWANTHand-Bold.ttf
+          weight: 900

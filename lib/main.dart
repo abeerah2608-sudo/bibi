@@ -12,11 +12,8 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => LanguageBloc()),
-        BlocProvider(create: (context) => AuthBloc()),
-      ],
+    return BlocProvider(
+      create: (context) => LanguageBloc(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(fontFamily: 'DM Sans'),

@@ -17,13 +17,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE6ED), Color(0xFFfffdfd)],
-          ),
-        ),
+        color : Color(0xFFFFF4F4),
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
@@ -227,7 +221,6 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_selectedLanguage != null) {
-                          // Dispatch language selection to BLoC
                           context.read<LanguageBloc>().add(
                                 SelectLanguageEvent(_selectedLanguage!),
                               );

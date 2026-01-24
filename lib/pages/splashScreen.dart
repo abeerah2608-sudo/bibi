@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'signIn.dart';
+import 'languageSelection.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,15 +12,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToSignIn();
+    _navigateToLanguageSelection();
   }
 
-  _navigateToSignIn() async {
+  _navigateToLanguageSelection() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const SignInPage()),
+        MaterialPageRoute(builder: (context) => const LanguageSelectionPage()),
       );
     }
   }
