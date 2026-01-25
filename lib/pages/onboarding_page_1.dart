@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/language_strings.dart';
+import '../utils/smooth_page_route.dart';
 import 'onboarding_page_2.dart';
 
 class OnboardingPage1 extends StatelessWidget {
@@ -73,8 +74,8 @@ class OnboardingPage1 extends StatelessWidget {
   child: ElevatedButton(
     onPressed: () {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OnboardingPage2(language: language),
+        SmoothPageRoute(
+          page: OnboardingPage2(language: language),
         ),
       );
     },

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/language_strings.dart';
-import 'onboarding_page_2.dart'; 
-import 'onboarding_page_4.dart'; 
+import '../utils/smooth_page_route.dart';
+import 'onboarding_page_2.dart';
+import 'onboarding_page_4.dart';
 
 class OnboardingPage3 extends StatelessWidget {
   final String language;
@@ -19,7 +20,7 @@ class OnboardingPage3 extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: Color(0xFFFFF4F4), 
+        color: Color(0xFFFFF4F4),
         child: Column(
           children: [
             SizedBox(height: 60),
@@ -48,9 +49,9 @@ class OnboardingPage3 extends StatelessWidget {
 
                   // Text on right side
                   Positioned(
-                    top: 150,
-                    left: MediaQuery.of(context).size.width * 0.5 + 16, // start around middle
-                    right: 16, // small right margin
+                    top: 140,
+                    left: MediaQuery.of(context).size.width * 0.5 + 16,
+                    right: 8,
                     child: parseBold(title),
                   ),
 
@@ -67,8 +68,8 @@ class OnboardingPage3 extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white, // white background
-                        side: BorderSide(color: Color(0xFFE86A8D), width: 2), // pink outline
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Color(0xFFE86A8D), width: 2),
                         padding: EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -76,7 +77,7 @@ class OnboardingPage3 extends StatelessWidget {
                       ),
                       child: Icon(
                         Icons.arrow_back,
-                        color: Color(0xFFE86A8D), // pink arrow
+                        color: Color(0xFFE86A8D),
                         size: 24,
                       ),
                     ),
@@ -89,13 +90,13 @@ class OnboardingPage3 extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => OnboardingPage4(language: language),
+                          SmoothPageRoute(
+                            page: OnboardingPage4(language: language),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFE86A8D), // pink filled
+                        backgroundColor: Color(0xFFE86A8D),
                         padding: EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -122,28 +123,35 @@ Widget parseBold(String text) {
   final spans = <TextSpan>[];
   int currentIndex = 0;
 
+  // Detect Urdu (Arabic script)
+  final isUrdu = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+  final isRoman = !isUrdu && RegExp(r'[a-zA-Z]').hasMatch(text);
+
+  // Font sizes
+  final normalFontSize = isUrdu ? 22.0 : (isRoman ? 19.0 : 24.0);
+  final boldFontSize = isUrdu ? 26.0 : (isRoman ? 24.0 : 30.0);
+
   for (final match in regex.allMatches(text)) {
     // Normal text before bold
     if (match.start > currentIndex) {
       spans.add(TextSpan(
         text: text.substring(currentIndex, match.start),
         style: TextStyle(
-          fontSize: 24,
+          fontSize: normalFontSize,
           height: 1.2,
           fontWeight: FontWeight.w500,
           fontFamily: 'Edu',
           color: Color(0xFF8B5E3C),
         ),
       ));
-      spans.add(const TextSpan(text: '\n')); 
     }
 
     // Bold text
     spans.add(TextSpan(
       text: match.group(1),
       style: TextStyle(
-        fontSize: 30,
-        height: 1.5, // line height for bold
+        fontSize: boldFontSize,
+        height: 1.5,
         fontWeight: FontWeight.w700,
         fontFamily: 'Edu',
         color: Color(0xFF8B5E3C),
@@ -155,11 +163,10 @@ Widget parseBold(String text) {
 
   // Any remaining text after last bold
   if (currentIndex < text.length) {
-    spans.add(const TextSpan(text: '\n'));
     spans.add(TextSpan(
       text: text.substring(currentIndex),
       style: TextStyle(
-        fontSize: 32,
+        fontSize: normalFontSize,
         height: 1.2,
         fontWeight: FontWeight.w500,
         fontFamily: 'Edu',
@@ -170,6 +177,7 @@ Widget parseBold(String text) {
 
   return RichText(
     textAlign: TextAlign.center,
+    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
     text: TextSpan(children: spans),
   );
 }
