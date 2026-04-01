@@ -33,8 +33,15 @@ class LanguageStrings {
     'checkup' : 'Regularly get your checkup done',
     'how_to_support_title': 'How to Support?',
     'congratulations': 'Congratulations!',
+    'breast_care' : 'Here\'s your daily dose of breast care!',
     'well_done_message': 'You have completed the breast cancer awareness and prevention guide. Great job learning about self-examination, treatment options, and healthy lifestyle choices!',
-    'you_are_ready': 'You are ready to take charge of your health and make informed decisions.'
+    'you_are_ready': 'You are ready to take charge of your health and make informed decisions.',
+    'quiz_q1': 'Do you have breast cancer\nin your family?',
+    'quiz_q2': 'Are you above the age of 40?',
+    'quiz_q3': 'Do you smoke or drink alcohol?',
+    'quiz_q4': 'Do you excercise regularly?',
+    'quiz_q5': 'Is your period irregular?',
+    'quiz_q6': 'Are you childless or have you had your first child after 30?'
   };
 
   static const Map<String, String> urdu = {
@@ -74,8 +81,15 @@ class LanguageStrings {
     'how_to_support_title': 'کیسے مدد کریں؟',
     'continue_after_watching': 'جاری رکھیں',
     'congratulations': 'مبارک ہو!',
+    'breast_care' : 'یہاں آپ کے لیے روزانہ breast care ہے!',
     'well_done_message': 'آپ نے بریسٹ کینسر سے آگاہی اور روک تھام کی رہنمائی مکمل کر لی۔ خود کے معائنے، علاج کی تدابیر اور صحت مند طرز زندگی کے انتخاب کے بارے میں سیکھنے پر شاباش!',
-    'you_are_ready': 'آپ اپنی صحت پر کنٹرول رکھنے اور سوچ سمجھ کر فیصلے کرنے کے لیے تیار ہیں۔'
+    'you_are_ready': 'آپ اپنی صحت پر کنٹرول رکھنے اور سوچ سمجھ کر فیصلے کرنے کے لیے تیار ہیں۔',
+    'quiz_q1': 'کیا آپ کے خاندان میں\nبریسٹ کینسر که کوئی معاملہ ہے؟',
+    'quiz_q2': 'کیا آپ 40 سال سے زیادہ عمر کے ہیں؟',
+    'quiz_q3': 'کیا آپ سگریٹ نوشی کرتے ہیں یا شراب پیتے ہیں؟',
+    'quiz_q4': 'کیا آپ باقاعدگی سے ورزش کرتے ہیں؟',
+    'quiz_q5': 'کیا آپ کا حیض غیر منطقی ہے؟',
+    'quiz_q6': 'کیا آپ بے اولاد ہیں یا اپنا پہلا بچہ 30 سال کے بعد پیدا کیے?'
   };
 
   static const Map<String, String> RomanUrdu = {
@@ -101,6 +115,8 @@ class LanguageStrings {
     'include_fruits_in_your_diet': 'Apni khurak mein\nphal shamil karain',
     'have_plenty_of_nuts': 'Khoob sare\nmewe khain',
     'listen': 'Sunain',
+    'breast_care' : 'Yahan aap ke liye rozana breast care hai!',
+
     'help': 'Merez ko kaam mein madad karain',
     'doctor': 'Baqaedaggi se doctor se rujoo karain',
     'checkup': 'Baqaedaggi se apni janch karain',
@@ -108,7 +124,13 @@ class LanguageStrings {
     'continue_after_watching': 'Jari Rakhen',
     'congratulations': 'Mubarak ho!',
     'well_done_message': 'Aapne breast cancer se aagahi aur rok thaam ki rehnumayee maqam kar li. Apne aap ke muayna, ilaj ki tadabir aur sehat mand taraz-e-zindagi ke inthikhab ke baaray mein seekhne par shabaash!',
-    'you_are_ready': 'Aap apni sehat par kontrol rakhne aur soch samjh kar faisale karne ke liye tayyar hain.'
+    'you_are_ready': 'Aap apni sehat par kontrol rakhne aur soch samjh kar faisale karne ke liye tayyar hain.',
+    'quiz_q1': 'Kya aapke khandaan mein breast cancer ka koi mamla hai?',
+    'quiz_q2': 'Kya aap 40 saal se zyada umar ke hain?',
+    'quiz_q3': 'Kya aap cigret noshi karte hain ya sharab pite hain?',
+    'quiz_q4': 'Kya aap baqaedaggi se workout karte hain?',
+    'quiz_q5': 'Kya aapka haiz ghair mantaqi hai?',
+    'quiz_q6': 'Kya aap bee auld hain ya apna pehla bacha 30 saal ke baad paida kie?'
   };
 
 static String getTranslation(String language, String key) {

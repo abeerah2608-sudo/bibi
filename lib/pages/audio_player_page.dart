@@ -1,17 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
+
 import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
+import '../widgets/onboarding_widgets_exports.dart';
 
-class AudioPlayerPage extends StatefulWidget {
+class AudioContent {
   final String title;
   final String subtitle;
+  final String audioPath;
+    final String animationPath;
+  final List<String> urduLyrics;
+  final List<String> englishLyrics;
 
-  const AudioPlayerPage({
-    super.key,
+  const AudioContent({
     required this.title,
     required this.subtitle,
+    required this.audioPath,
+    required this.animationPath,
+    required this.urduLyrics,
+    required this.englishLyrics,
   });
+
+  List<String> getLyrics(String language) {
+    if (language == 'English') {
+      return englishLyrics;
+    } else if (language == 'Urdu') {
+      return urduLyrics;
+    } else {
+      return [];
+    }
+  }
+}
+
+class AudioPlayerPage extends StatefulWidget {
+  final AudioContent audioContent;
+
+  const AudioPlayerPage({
+    Key? key,
+    required this.audioContent,
+  }) : super(key: key);
 
   @override
   State<AudioPlayerPage> createState() => _AudioPlayerPageState();
@@ -19,73 +49,90 @@ class AudioPlayerPage extends StatefulWidget {
 
 class _AudioPlayerPageState extends State<AudioPlayerPage> {
   late PageController _pageController;
-  int _currentPage = 0;
+  late AudioPlayer _audioPlayer;
+
   bool _isPlaying = false;
   double _position = 0.0;
-  double _duration = 245.0; // 2:45 in seconds
+  double _duration = 166.0;
+  int _currentLyricLineIndex = 0;
+  String _currentLanguage = 'English';
+
+  List<String> get _lyricLines =>
+      widget.audioContent.getLyrics(_currentLanguage);
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _audioPlayer = AudioPlayer();
+
+    _audioPlayer.setAsset(widget.audioContent.audioPath).then((_) {
+      final dur = _audioPlayer.duration;
+      if (dur != null && mounted) {
+        setState(() => _duration = dur.inSeconds.toDouble());
+      }
+    }).catchError((e) {
+      debugPrint('Audio load error: $e');
+    });
+
+    _audioPlayer.positionStream.listen((pos) {
+      if (!mounted) return;
+      setState(() {
+        _position = pos.inSeconds.toDouble().clamp(0.0, _duration);
+        final maxIndex = _lyricLines.length - 1;
+        _currentLyricLineIndex = (_position ~/ 10).clamp(0, maxIndex);
+      });
+    });
+
+    _audioPlayer.playingStream.listen((playing) {
+      if (!mounted) return;
+      setState(() => _isPlaying = playing);
+    });
+  }
+
+  void _seekTo(double value) {
+    final clamped = value.clamp(0.0, _duration);
+    _audioPlayer.seek(Duration(seconds: clamped.toInt()));
+    setState(() {
+      _position = clamped;
+      final maxIndex = _lyricLines.length - 1;
+      _currentLyricLineIndex = (clamped ~/ 10).clamp(0, maxIndex);
+    });
   }
 
   @override
   void dispose() {
+    _audioPlayer.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
   String _formatTime(double seconds) {
-    int minutes = seconds.toInt() ~/ 60;
-    int secs = seconds.toInt() % 60;
-    return '${minutes}:${secs.toString().padLeft(2, '0')}';
+    final int s = seconds.toInt();
+    return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<LanguageBloc, LanguageState>(
       builder: (context, state) {
-        String currentLanguage = 'English';
         if (state is LanguageSelected) {
-          currentLanguage = state.language;
+          _currentLanguage = state.language;
         }
-
-        final lyrics = currentLanguage == 'English'
-            ? '''Our bodies are made up of tiny cells. Sometimes, these breast cells in the breast start growing abnormally and out of control. That is what breast cancer is.
-
-In Pakistan, 1 in 9 women may face it in their lifetime, but here's the good news:
-
-If we catch it early, it's curable. Early detection is very important!'''
-            : currentLanguage == 'اردو'
-                ? '''ہمارے جسم چھوٹی چھوٹی خلیوں سے بنے ہوتے ہیں۔ کبھی کبھار، بریسٹ میں بریسٹ کی خلیں غیر معمولی انداز میں بڑھنے لگتی ہیں۔ یہ بریسٹ کینسر ہے۔
-
-پاکستان میں، ہر 9 میں سے 1 خاتون کو اپنی زندگی میں اس کا سامنا ہو سکتا ہے، لیکن یہاں اچھی خبر ہے:
-
-اگر ہم اسے جلدی پکڑیں، تو یہ قابل علاج ہے۔ جلد تشخیص بہت اہم ہے!'''
-                : '''Our bodies are made up of tiny cells. Sometimes, these breast cells in the breast start growing abnormally and out of control. That is what breast cancer is.
-
-In Pakistan, 1 in 9 women may face it in their lifetime, but here's the good news:
-
-If we catch it early, it's curable. Early detection is very important!''';
 
         return WillPopScope(
           onWillPop: () async {
             Navigator.pop(context);
             return false;
+         
           },
           child: Scaffold(
             body: SafeArea(
               child: PageView(
                 controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
                 children: [
-                  // Play Screen
-                  _buildPlayScreen(currentLanguage),
-                  // Lyrics Screen
-                  _buildLyricsScreen(lyrics, currentLanguage),
+                  _buildPlayScreen(),
+                  _buildLyricsScreen(),
                 ],
               ),
             ),
@@ -95,304 +142,224 @@ If we catch it early, it's curable. Early detection is very important!''';
     );
   }
 
-  Widget _buildPlayScreen(String language) {
+  Widget _buildPlayScreen() {
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFFF5A6C2).withOpacity(0.3),
-            const Color(0xFFFFB6D9).withOpacity(0.3),
-          ],
-        ),
-      ),
+      color: const Color(0xFFFFF5F5),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.arrow_back,
-                      color: Color(0xFF8B5E3C), size: 24),
-                ),
-                const Text(
-                  'NOW LEARNING',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFE86A8D),
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {},
-                  child: const Icon(Icons.favorite_border,
-                      color: Color(0xFFE86A8D), size: 24),
-                ),
-              ],
-            ),
-          ),
-
-          // Content
+          const _Header(),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Circular display (album art placeholder)
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFFFE8F0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Decorative circles
-                      Container(
-                        width: 160,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFFFC8DC).withOpacity(0.5),
-                        ),
-                      ),
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFFFB2C7),
-                        ),
-                        child: const Icon(Icons.play_circle_fill,
-                            color: Colors.white, size: 50),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Title and subtitle
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      Text(
-                        widget.title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF333333),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.subtitle,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF888888),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: RepaintBoundary(
+              child: Center(
+                child: OnboardingAnimation(
+  assetPath: widget.audioContent.animationPath, // ← was hardcoded before
+  translateX: 0,
+  translateY: 0,
+  repeat: false,
+),
+              ),
             ),
           ),
-
-          // Controls
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                // Time display
-                Text(
-                  '${_formatTime(_position)} / ${_formatTime(_duration)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF999999),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Slider
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 4.0,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 8.0,
-                    ),
-                  ),
-                  child: Slider(
-                    value: _position,
-                    min: 0,
-                    max: _duration,
-                    activeColor: const Color(0xFFE86A8D),
-                    inactiveColor: const Color(0xFFFFD5E0),
-                    onChanged: (value) {
-                      setState(() => _position = value);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Play controls
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        _position = (_position - 15).clamp(0.0, _duration);
-                        setState(() {});
-                      },
-                      child: const Icon(Icons.fast_rewind,
-                          color: Color(0xFFE86A8D), size: 36),
-                    ),
-                    const SizedBox(width: 48),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _isPlaying = !_isPlaying);
-                      },
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFE86A8D),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFE86A8D)
-                                  .withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 48),
-                    GestureDetector(
-                      onTap: () {
-                        _position = (_position + 15).clamp(0.0, _duration);
-                        setState(() {});
-                      },
-                      child: const Icon(Icons.fast_forward,
-                          color: Color(0xFFE86A8D), size: 36),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Page indicators and lyrics button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFE86A8D),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      },
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFFFFD5E0),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'LYRICS',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF888888),
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildPlayerControls(),
         ],
       ),
     );
   }
 
-  Widget _buildLyricsScreen(String lyrics, String language) {
+  Widget _buildPlayerControls() {
     return Container(
-      color: const Color(0xFFFFF8F8),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
       child: Column(
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: const Icon(Icons.arrow_back,
-                      color: Color(0xFF8B5E3C), size: 24),
+          // Time labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatTime(_position),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF999999),
+                  fontWeight: FontWeight.w500,
                 ),
-                const Text(
-                  'NOW LEARNING',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+              ),
+              Text(
+                _formatTime(_duration),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF999999),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+
+          SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 4.0,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
+              overlayShape: SliderComponentShape.noOverlay,
+            ),
+            child: Slider(
+              value: _position.clamp(0.0, _duration),
+              min: 0.0,
+              max: _duration,
+              activeColor: const Color(0xFFE86A8D),
+              inactiveColor: const Color(0xFFFFD5E0),
+              onChanged: (value) => _seekTo(value),
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            widget.audioContent.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'BIBI',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF999999),
+              letterSpacing: 1.2,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Transport controls
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () => _seekTo(_position - 15),
+                child: const Icon(Icons.fast_rewind_rounded,
+                    color: Color(0xFFE86A8D), size: 42),
+              ),
+              const SizedBox(width: 40),
+
+              GestureDetector(
+                onTap: () {
+                  if (_audioPlayer.playing) {
+                    _audioPlayer.pause();
+                  } else {
+                    _audioPlayer.play();
+                  }
+                },
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
                     color: Color(0xFFE86A8D),
-                    letterSpacing: 1.2,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromARGB(89, 232, 106, 141),
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _isPlaying ? Icons.pause : Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 38,
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {},
-                  child: const Icon(Icons.favorite,
-                      color: Color(0xFFE86A8D), size: 24),
+              ),
+
+              const SizedBox(width: 40),
+              GestureDetector(
+                onTap: () => _seekTo(_position + 15),
+                child: const Icon(Icons.fast_forward_rounded,
+                    color: Color(0xFFE86A8D), size: 42),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          GestureDetector(
+            onTap: () => _pageController.nextPage(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.keyboard_arrow_up,
+                    color: Color(0xFFE86A8D), size: 22),
+                Text(
+                  'LYRICS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF999999),
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // Title
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLyricsScreen() {
+    final lines = _lyricLines;
+    final isUrdu = _currentLanguage == 'Urdu';
+
+    return Container(
+      color: const Color(0xFFFFF5F5),
+      child: Column(
+        children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () => _pageController.previousPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
+                  child: _circleButton(
+                    child: const Icon(Icons.arrow_back_ios_new,
+                        color: Color(0xFF8B5E3C), size: 16),
+                  ),
+                ),
+                const Text(
+                  'NOW LEARNING',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF333333),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                _circleButton(
+                  child: const Icon(Icons.favorite,
+                      color: Color(0xFFE86A8D), size: 18),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              widget.title,
+              widget.audioContent.title,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 18,
@@ -402,38 +369,60 @@ If we catch it early, it's curable. Early detection is very important!''';
             ),
           ),
 
-          // Lyrics
+          const SizedBox(height: 20),
+
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                lyrics,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFFBBBBBB),
-                  height: 1.6,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+              itemCount: lines.length,
+              itemBuilder: (context, index) {
+                final bool isActive = index == _currentLyricLineIndex;
+                final bool isPast = index < _currentLyricLineIndex;
+
+                final Color lineColor = isActive
+                    ? const Color(0xFFE86A8D)
+                    : isPast
+                        ? const Color(0xFFE86A8D).withOpacity(0.3)
+                        : const Color(0xFFCCCCCC);
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  margin: EdgeInsets.symmetric(vertical: isActive ? 10 : 5),
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                    style: TextStyle(
+                      fontSize: isActive ? 17 : 13,
+                      fontWeight:
+                          isActive ? FontWeight.w700 : FontWeight.w400,
+                      color: lineColor,
+                      height: 1.7,
+                    ),
+                    child: Text(
+                      lines[index],
+                      textAlign: TextAlign.center,
+                      textDirection:
+                          isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
 
-          // Bottom controls
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      },
+                      onTap: () => _pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      ),
                       child: Container(
                         width: 8,
                         height: 8,
@@ -454,33 +443,30 @@ If we catch it early, it's curable. Early detection is very important!''';
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 GestureDetector(
-                  onTap: () {
-                    _pageController.previousPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
+                  onTap: () => _pageController.previousPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
                   child: Container(
-                    width: 60,
-                    height: 60,
+                    width: 64,
+                    height: 64,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: const Color(0xFFE86A8D),
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              const Color(0xFFE86A8D).withOpacity(0.3),
-                          blurRadius: 15,
+                          color: const Color(0xFFE86A8D).withOpacity(0.35),
+                          blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.play_arrow,
+                      Icons.play_arrow_rounded,
                       color: Colors.white,
-                      size: 28,
+                      size: 32,
                     ),
                   ),
                 ),
@@ -491,4 +477,225 @@ If we catch it early, it's curable. Early detection is very important!''';
       ),
     );
   }
+
+  Widget _circleButton({required Widget child}) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 }
+
+// ── Stateless header ──────────────────────────────────────────────────────────
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Color(0xFF8B5E3C), size: 16),
+            ),
+          ),
+          const Text(
+            'NOW PLAYING',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF333333),
+              letterSpacing: 1.2,
+            ),
+          ),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.favorite_border,
+                color: Color(0xFFE86A8D), size: 18),
+          ),
+        ],
+      ),
+    );
+  }
+  
+}
+// ── Audio Content Instances ───────────────────────────────────────────────────
+
+const audioContent1 = AudioContent(
+  title: 'What is Breast Cancer?',
+  subtitle: 'Understanding the basics',
+  audioPath: 'assets/audio/your_audio.mp3',
+  animationPath: 'assets/images/Cancer Cell Animation from Bibi Project (1).lottie',
+  urduLyrics: [
+    'چھاتی کا کینسر کیا ہے؟',
+    'یہ ایک بیماری ہے جو چھاتی کے خلیوں میں شروع ہوتی ہے',
+    'جب خلیے بے قابو ہو کر بڑھنے لگتے ہیں',
+    'تو وہ گانٹھ بناتے ہیں',
+  ],
+  englishLyrics: [
+    'What is breast cancer?',
+    'It is a disease that begins in breast cells',
+    'When cells grow out of control',
+    'They form a lump or tumor',
+  ],
+);
+
+const audioContent2 = AudioContent(
+  title: 'Are you at Risk?',
+  subtitle: 'When an abnormality is found',
+  audioPath: 'assets/audio/are_you_at_risk.mp3',
+  animationPath: 'assets/images/family_tree.lottie',
+  urduLyrics: [
+    'کیا آپ خطرے میں ہیں؟',
+    'خاندانی تاریخ ایک اہم عنصر ہے',
+    'عمر کے ساتھ خطرہ بڑھتا ہے',
+    'باقاعدہ جانچ ضروری ہے',
+  ],
+  englishLyrics: [
+    'Are you at risk?',
+    'Family history is an important factor',
+    'Risk increases with age',
+    'Regular screening is essential',
+  ],
+);
+
+const audioContent3 = AudioContent(
+  title: 'Preventive Screening',
+  subtitle: 'Understanding preventive screening',
+  audioPath: 'assets/audio/preventive_screening.mp3',
+  animationPath: 'assets/images/mammogram.lottie',
+  urduLyrics: [
+    'احتیاطی اسکریننگ کیا ہے؟',
+    'میموگرام ایک اہم ٹیسٹ ہے',
+    'جلد پتہ لگانا زندگی بچا سکتا ہے',
+    'سال میں ایک بار جانچ کروائیں',
+  ],
+  englishLyrics: [
+    'What is preventive screening?',
+    'A mammogram is an important test',
+    'Early detection can save lives',
+    'Get checked once a year',
+  ],
+);
+
+const audioContent4 = AudioContent(
+  title: 'How to Treat?',
+  subtitle: 'Care options after detection',
+  audioPath: 'assets/audio/how_to_treat.mp3',
+    animationPath: 'assets/images/Family Tree Animation from Bibi Project (1).lottie',
+
+  urduLyrics: [
+    'علاج کے کیا طریقے ہیں؟',
+    'سرجری ایک آپشن ہو سکتی ہے',
+    'کیموتھراپی بھی ممکن ہے',
+    'ڈاکٹر سے مشورہ کریں',
+  ],
+  englishLyrics: [
+    'What are the treatment options?',
+    'Surgery may be one option',
+    'Chemotherapy is also possible',
+    'Consult your doctor',
+  ],
+);
+
+const audioContent5 = AudioContent(
+  title: 'How to Confirm?',
+  subtitle: 'Tests and checks to know for sure',
+  audioPath: 'assets/audio/how_to_confirm.mp3',
+    animationPath: 'assets/images/Family Tree Animation from Bibi Project (1).lottie',
+
+  urduLyrics: [
+    'تشخیص کیسے کریں؟',
+    'بایوپسی ایک اہم ٹیسٹ ہے',
+    'الٹراساؤنڈ بھی مددگار ہے',
+    'ڈاکٹر سے رجوع کریں',
+  ],
+  englishLyrics: [
+    'How to confirm a diagnosis?',
+    'A biopsy is an important test',
+    'Ultrasound can also help',
+    'See your doctor promptly',
+  ],
+);
+
+const audioContent6 = AudioContent(
+  title: 'How to Prevent?',
+  subtitle: 'Simple steps to lower the risk',
+  audioPath: 'assets/audio/how_to_prevent.mp3',
+    animationPath: 'assets/images/Family Tree Animation from Bibi Project (1).lottie',
+
+  urduLyrics: [
+    'بچاؤ کے طریقے کیا ہیں؟',
+    'صحت مند غذا کھائیں',
+    'ورزش کو معمول بنائیں',
+    'شراب اور سگریٹ سے پرہیز کریں',
+  ],
+  englishLyrics: [
+    'How can you prevent breast cancer?',
+    'Eat a healthy balanced diet',
+    'Make exercise a daily habit',
+    'Avoid alcohol and smoking',
+  ],
+);
+
+const audioContent7 = AudioContent(
+  title: 'How to Support?',
+  subtitle: 'Ways to help with care and comfort',
+  audioPath: 'assets/audio/how_to_support.mp3',
+    animationPath: 'assets/images/Family Tree Animation from Bibi Project (1).lottie',
+
+  urduLyrics: [
+    'مدد کیسے کریں؟',
+    'مریض کے ساتھ وقت گزاریں',
+    'ان کی بات سنیں',
+    'طبی اپائنٹمنٹ میں ساتھ جائیں',
+  ],
+  englishLyrics: [
+    'How can you support someone?',
+    'Spend quality time with them',
+    'Listen and be present',
+    'Accompany them to appointments',
+  ],
+);

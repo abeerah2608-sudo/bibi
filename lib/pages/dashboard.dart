@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import 'quiz_page_1.dart';
-import 'audio_player_page.dart';
+import 'audio_player_page.dart' show AudioPlayerPage, AudioContent, audioContent1, audioContent2, audioContent3, audioContent4, audioContent5, audioContent6, audioContent7;
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         imagePlaceholder: 'whatIsIt.png',
         titleKey: 'cancer_cell',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent1,
       ),
       VideoCardData(
         title: 'Are you at Risk?',
@@ -57,6 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         imagePlaceholder: 'risk.png',
         titleKey: 'family_tree',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent2,
       ),
     ],
     'Care': [
@@ -68,6 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         accentColor: Color(0xFFE91E8C),
         titleKey: 'self_examine_card_title',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent3,
       ),
       VideoCardData(
         title: 'How to Treat?',
@@ -76,6 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         imagePlaceholder: 'treat.jpg',
         titleKey: 'how_to_treat_title',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent4,
       ),
       VideoCardData(
         title: 'How to Confirm?',
@@ -84,6 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         imagePlaceholder: 'check.jpg',
         titleKey: 'self_examine_title',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent5,
       ),
     ],
     'Support': [
@@ -94,6 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         imagePlaceholder: 'prevent.jpg',
         titleKey: 'how_to_prevent_title',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent6,
       ),
       VideoCardData(
         title: 'How to Support?',
@@ -102,6 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         imagePlaceholder: 'support.jpg',
         titleKey: 'how_to_support_title',
         subtitleKey: 'self_examine_subtitle',
+        audioContent: audioContent7,
       ),
     ],
   };
@@ -366,7 +373,7 @@ class _WelcomeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final careText =
-        LanguageStrings.getTranslation(language, 'life_is_too_short')
+        LanguageStrings.getTranslation(language, 'breast_care')
             .replaceAll('[b]', '')
             .replaceAll('[/b]', '');
 
@@ -374,7 +381,7 @@ class _WelcomeBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFF4F4),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -563,12 +570,14 @@ class VideoCardData {
   final Color? accentColor;
   final String? titleKey;
   final String? subtitleKey;
+  final AudioContent audioContent;
 
   const VideoCardData({
     required this.title,
     required this.subtitle,
     required this.duration,
     required this.imagePlaceholder,
+    required this.audioContent,
     this.accentColor,
     this.titleKey,
     this.subtitleKey,
@@ -678,8 +687,7 @@ class _VideoCard extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => AudioPlayerPage(
-                                title: title,
-                                subtitle: subtitle,
+                                audioContent: data.audioContent,
                               ),
                             ),
                           );

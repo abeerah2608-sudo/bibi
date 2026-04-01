@@ -1,0 +1,152 @@
+
+ACTIVITY MANAGER SETTINGS (dumpsys activity settings) activity_manager_constants:
+  max_cached_processes=72
+  background_settle_time=60000
+  fgservice_min_shown_time=2000
+  fgservice_min_report_time=3000
+  fgservice_screen_on_before_time=1000
+  fgservice_screen_on_after_time=5000
+  content_provider_retain_time=20000
+  gc_timeout=5000
+  gc_min_interval=60000
+  force_bg_check_on_restricted=true
+  full_pss_min_interval=1200000
+  full_pss_lowered_interval=300000
+  power_check_interval=300000
+  power_check_max_cpu_1=25
+  power_check_max_cpu_2=25
+  power_check_max_cpu_3=10
+  power_check_max_cpu_4=2
+  service_usage_interaction_time=1800000
+  service_usage_interaction_time_post_s=60000
+  usage_stats_interaction_interval=7200000
+  usage_stats_interaction_interval_post_s=600000
+  service_restart_duration=1000
+  service_reset_run_duration=60000
+  service_restart_duration_factor=4
+  service_min_restart_time_between=10000
+  service_max_inactivity=1800000
+  service_bg_start_timeout=15000
+  service_bg_activity_start_timeout=10000
+  service_crash_restart_duration=1800000
+  service_crash_max_retry=16
+  process_start_async=true
+  memory_info_throttle_time=300000
+  top_to_fgs_grace_duration=15000
+  top_to_almost_perceptible_grace_duration=15000
+  min_crash_interval=120000
+  process_crash_count_reset_interval=43200000
+  process_crash_count_limit=12
+  imperceptible_kill_exempt_proc_states=[0, 1, 2, 4, 12]
+  imperceptible_kill_exempt_packages=[]
+  min_assoc_log_duration=300000
+  binder_heavy_hitter_watcher_enabled=false
+  binder_heavy_hitter_watcher_batchsize=2000
+  binder_heavy_hitter_watcher_threshold=0.333
+  binder_heavy_hitter_auto_sampler_enabled=false
+  binder_heavy_hitter_auto_sampler_batchsize=400
+  binder_heavy_hitter_auto_sampler_threshold=0.333
+  max_phantom_processes=32
+  boot_time_temp_allowlist_duration=20000
+  fg_to_bg_fgs_grace_duration=5000
+  fgs_start_foreground_timeout=10000
+  enable_app_start_info=false
+  default_background_activity_starts_enabled=false
+  default_background_fgs_starts_restriction_enabled=true
+  default_fgs_starts_restriction_enabled=true
+  default_fgs_starts_restriction_notification_enabled=false
+  default_fgs_starts_restriction_check_caller_target_sdk=true
+  fgs_atom_sample_rate=1.0
+  fgs_start_allowed_log_sample_rate=0.25
+  fgs_start_denied_log_sample_rate=1.0
+  push_messaging_over_quota_behavior=1
+  fgs_allow_opt_out=false
+  enable_experimental_component_alias=false
+  component_alias_overrides=
+  defer_boot_completed_broadcast=6
+  prioritize_alarm_broadcasts=true
+  no_kill_cached_processes_until_boot_completed=false
+  no_kill_cached_processes_post_boot_completed_duration_millis=0
+  max_empty_time_millis=3600000000
+  service_start_foreground_timeout_ms=30000
+  service_start_foreground_anr_delay_ms=10000
+  service_bind_almost_perceptible_timeout_ms=15000
+  network_access_timeout_ms=200
+  max_service_connections_per_process=3000
+  proactive_kills_enabled=false
+  low_swap_threshold_percent=0.1
+  deferred_fgs_notifications_enabled=true
+  deferred_fgs_notifications_api_gated=false
+  deferred_fgs_notification_interval=10000
+  deferred_fgs_notification_interval_for_short=10000
+  deferred_fgs_notification_exclusion_time=120000
+  deferred_fgs_notification_exclusion_time_for_short=120000
+  system_exempt_power_restrictions_enabled=true
+  short_fgs_timeout_duration=180000
+  short_fgs_proc_state_extra_wait_duration=5000
+  short_fgs_anr_extra_wait_duration=10000
+  use_tiered_cached_adj=false
+  tiered_cached_adj_decay_time=60000
+
+  mOverrideMaxCachedProcesses=96
+  mCustomizedMaxCachedProcesses=32
+  CUR_MAX_CACHED_PROCESSES=72
+  CUR_MAX_EMPTY_PROCESSES=36
+  CUR_TRIM_EMPTY_PROCESSES=18
+  CUR_TRIM_CACHED_PROCESSES=12
+  OOMADJ_UPDATE_QUICK=true
+  ENABLE_WAIT_FOR_FINISH_ATTACH_APPLICATION=false
+CachedAppOptimizer settings
+  use_compaction=false
+  compact_throttle_1=5000
+  compact_throttle_2=10000
+  compact_throttle_3=500
+  compact_throttle_4=10000
+  compact_throttle_min_oom_adj=900
+  compact_throttle_max_oom_adj=999
+  compact_statsd_sample_rate=0.1
+  compact_full_rss_throttle_kb=12000
+  compact_full_delta_rss_throttle_kb=8000
+  compact_proc_state_throttle=[11]
+ Per-Process Compaction Stats
+
+ Per-Source Compaction Stats
+
+Total Compactions Performed by profile: 0 some, 0 full
+Total compactions downgraded: 0
+Total compactions cancelled by reason: 
+
+ System Compaction Memory Stats
+    Compactions Performed: 0
+    Total Memory Freed (KB): 0
+    Avg Mem Freed per Compact (KB): 0.0
+
+  Tracking last compaction stats for 0 processes.
+Last Compaction per process stats:
+    (ProcessName,Source,DeltaAnonRssKBs,ZramConsumedKBs,AnonMemFreedKBs,CompactEfficiency,CompactCost(ms/MB),procState,oomAdj,oomAdjReason)
+
+Last 20 Compactions Stats:
+    (ProcessName,Source,DeltaAnonRssKBs,ZramConsumedKBs,AnonMemFreedKBs,CompactEfficiency,CompactCost(ms/MB),procState,oomAdj,oomAdjReason)
+
+  use_freezer=false
+  freeze_statsd_sample_rate=0.1
+  freeze_debounce_timeout=10000
+  freeze_exempt_inst_pkg=true
+  freeze_binder_enabled=true
+  freeze_binder_threshold=1000
+  freeze_binder_divisor=4
+  freeze_binder_offset=500
+  Apps frozen: 0
+CacheOomRanker settings
+  use_oom_re_ranking=false
+  oom_re_ranking_number_to_re_rank=8
+  oom_re_ranking_lru_weight=0.35
+  oom_re_ranking_uses_weight=0.5
+  oom_re_ranking_rss_weight=0.15
+
+ACTIVITY MANAGER ALLOWED ASSOCIATION STATE (dumpsys activity allowed-associations)
+  Allowed associations (by restricted package):
+  * com.google.android.as:
+      Allow: com.android.bluetooth.services
+      Allow: com.android.providers.telephony
+      Allow: com.android.providers.media
