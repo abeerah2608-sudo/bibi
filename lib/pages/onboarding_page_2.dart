@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import '../widgets/cached_logo_image.dart';
@@ -7,12 +9,7 @@ import 'onboarding_page_1.dart';
 import 'onboarding_page_3.dart';
 
 class OnboardingPage2 extends StatefulWidget {
-  final String language;
-
-  const OnboardingPage2({
-    super.key,
-    required this.language,
-  });
+  const OnboardingPage2({super.key});
 
   @override
   State<OnboardingPage2> createState() => _OnboardingPage2State();
@@ -33,9 +30,16 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
 
   @override
   Widget build(BuildContext context) {
-    final title = LanguageStrings.getTranslation(widget.language, 'im_bibi');
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        String currentLanguage = 'English';
+        if (state is LanguageSelected) {
+          currentLanguage = state.language;
+        }
 
-    return Scaffold(
+        final title = LanguageStrings.getTranslation(currentLanguage, 'im_bibi');
+
+        return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -81,14 +85,14 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                       onBackPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => OnboardingPage1(language: widget.language),
+                            builder: (context) => const OnboardingPage1(),
                           ),
                         );
                       },
                       onNextPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => OnboardingPage3(language: widget.language),
+                            builder: (context) => const OnboardingPage3(),
                           ),
                         );
                       },
@@ -100,6 +104,8 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
+import '../services/language_strings.dart';
 import 'quiz_page_1.dart';
+import 'audio_player_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,12 +28,7 @@ class MyApp extends StatelessWidget {
 }
 
 class DashboardScreen extends StatefulWidget {
-  final String language;
-
-  const DashboardScreen({
-    super.key,
-    this.language = 'English',
-  });
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -41,7 +40,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   final List<String> _tabs = ['Basics', 'Care', 'Support'];
 
-  // Tab content: each tab has a list of video cards
   final Map<String, List<VideoCardData>> _tabContent = {
     'Basics': [
       VideoCardData(
@@ -49,12 +47,16 @@ class _DashboardScreenState extends State<DashboardScreen>
         subtitle: 'Understanding the basics in 5 min',
         duration: '3:24',
         imagePlaceholder: 'whatIsIt.png',
+        titleKey: 'cancer_cell',
+        subtitleKey: 'self_examine_subtitle',
       ),
       VideoCardData(
         title: 'Are you at Risk?',
         subtitle: 'When an abnormality is found',
         duration: '3:24',
         imagePlaceholder: 'risk.png',
+        titleKey: 'family_tree',
+        subtitleKey: 'self_examine_subtitle',
       ),
     ],
     'Care': [
@@ -64,18 +66,24 @@ class _DashboardScreenState extends State<DashboardScreen>
         duration: '3:24',
         imagePlaceholder: 'mammogram.jpg',
         accentColor: Color(0xFFE91E8C),
+        titleKey: 'self_examine_card_title',
+        subtitleKey: 'self_examine_subtitle',
       ),
       VideoCardData(
         title: 'How to Treat?',
         subtitle: 'Care options after detection',
         duration: '5:24',
         imagePlaceholder: 'treat.jpg',
+        titleKey: 'how_to_treat_title',
+        subtitleKey: 'self_examine_subtitle',
       ),
       VideoCardData(
         title: 'How to Confirm?',
         subtitle: 'Tests and checks to know for sure',
         duration: '3:24',
         imagePlaceholder: 'check.jpg',
+        titleKey: 'self_examine_title',
+        subtitleKey: 'self_examine_subtitle',
       ),
     ],
     'Support': [
@@ -84,12 +92,16 @@ class _DashboardScreenState extends State<DashboardScreen>
         subtitle: 'Simple steps to lower the risk',
         duration: '5:24',
         imagePlaceholder: 'prevent.jpg',
+        titleKey: 'how_to_prevent_title',
+        subtitleKey: 'self_examine_subtitle',
       ),
       VideoCardData(
         title: 'How to Support?',
         subtitle: 'Ways to help with care and comfort',
         duration: '3:24',
         imagePlaceholder: 'support.jpg',
+        titleKey: 'how_to_support_title',
+        subtitleKey: 'self_examine_subtitle',
       ),
     ],
   };
@@ -106,80 +118,87 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black38,
+      builder: (context) => const _LanguageDialog(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-backgroundColor: const Color(0xFFFFF4F4),      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        String currentLanguage = 'English';
+        if (state is LanguageSelected) {
+          currentLanguage = state.language;
+        }
 
-                // ── Welcome Banner ──────────────────────────────────────────
-                _WelcomeBanner(),
+        return Scaffold(
+          backgroundColor: const Color(0xFFFFF4F4),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
 
-                const SizedBox(height: 16),
+                    // ── Welcome Banner (now contains globe icon) ──────────
+                    _WelcomeBanner(
+                      language: currentLanguage,
+                      onLanguageTap: _showLanguageDialog,
+                    ),
 
-                // ── Quiz / Progress Card ─────────────────────────────────────
-                _QuizCard(language: widget.language),
-
-                const SizedBox(height: 16),
-
-                // ── Tab Bar ──────────────────────────────────────────────────
-                _buildTabBar(),
-
-                const SizedBox(height: 16),
-
-                // ── Tab Content ──────────────────────────────────────────────
-                _buildTabContent(),
-
-                const SizedBox(height: 24),
-              ],
+                    const SizedBox(height: 16),
+                    _QuizCard(language: currentLanguage),
+                    const SizedBox(height: 16),
+                    _buildTabBar(),
+                    const SizedBox(height: 16),
+                    _buildTabContent(currentLanguage),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: const Color(0xFFF98CA9),
+          width: 1.2,
         ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        onTap: (_) => setState(() {}),
+        indicator: BoxDecoration(
+          color: const Color(0xFFF98CA9),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: Colors.white,
+        unselectedLabelColor: const Color(0xFF8B5E3C),
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        unselectedLabelStyle:
+            const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
+        dividerColor: Colors.transparent,
+        tabs: _tabs.map((t) => Tab(text: t)).toList(),
       ),
     );
   }
-Widget _buildTabBar() {
-  return Container(
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFF4F4),
-      borderRadius: BorderRadius.circular(30),
-      border: Border.all(
-        color: const Color(0xFFF98CA9),
-        width: 1.2,
-      ),
-    ),
-    child: TabBar(
-      controller: _tabController,
-      onTap: (_) => setState(() {}),
-      indicator: BoxDecoration(
-        color: const Color(0xFFF98CA9),
-        borderRadius: BorderRadius.circular(30),
-      ),
-      indicatorSize: TabBarIndicatorSize.tab,
-      labelColor: Colors.white,
-      unselectedLabelColor: const Color(0xFF8B5E3C),
-      labelStyle: const TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 14,
-      ),
-      unselectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w400,
-        fontSize: 14,
-      ),
-      dividerColor: Colors.transparent,
-      tabs: _tabs.map((t) => Tab(text: t)).toList(),
-    ),
-  );
-}
 
-  Widget _buildTabContent() {
-    // Read current tab index
+  Widget _buildTabContent(String language) {
     final currentTab = _tabs[_tabController.index];
     final cards = _tabContent[currentTab] ?? [];
 
@@ -190,9 +209,146 @@ Widget _buildTabBar() {
         children: cards
             .map((card) => Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _VideoCard(data: card),
+                  child: _VideoCard(data: card, language: language),
                 ))
             .toList(),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Language Dialog
+// ────────────────────────────────────────────────────────────────────────────
+class _LanguageDialog extends StatefulWidget {
+  const _LanguageDialog();
+
+  @override
+  State<_LanguageDialog> createState() => _LanguageDialogState();
+}
+
+class _LanguageDialogState extends State<_LanguageDialog> {
+  String _selected = 'English';
+
+  final List<Map<String, String>> _languages = [
+    {'label': 'English', 'sub': ''},
+    {'label': 'Urdu', 'sub': 'اردو'},
+    {'label': 'Roman Urdu', 'sub': ''},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8F8),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.close,
+                    size: 20, color: Color(0xFF888888)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Choose Language',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF333333)),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Select the language you prefer',
+              style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+            ),
+            const SizedBox(height: 20),
+            ..._languages.map((lang) {
+              final isSelected = _selected == lang['label'];
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selected = lang['label']!);
+                  context
+                      .read<LanguageBloc>()
+                      .add(SelectLanguageEvent(lang['label']!));
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFF98CA9)
+                          : const Color(0xFFEDD5D5),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            lang['label']!,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF333333)),
+                          ),
+                          if (lang['sub']!.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Text(lang['sub']!,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF888888))),
+                          ],
+                        ],
+                      ),
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFFF98CA9)
+                                : const Color(0xFFCCCCCC),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: isSelected
+                            ? Center(
+                                child: Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFFF98CA9),
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -202,98 +358,76 @@ Widget _buildTabBar() {
 // Welcome Banner
 // ────────────────────────────────────────────────────────────────────────────
 class _WelcomeBanner extends StatelessWidget {
+  final String language;
+  final VoidCallback onLanguageTap;
+  const _WelcomeBanner(
+      {required this.language, required this.onLanguageTap});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 210,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFCE4EC),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Decorative circle
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFF48FB1).withOpacity(0.25),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Text
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          children: const [
-                            Text(
-                              'Welcome Back ',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF888888),
-                              ),
-                            ),
-                            Text('👋', style: TextStyle(fontSize: 13)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: const [
-                            Text(
-                              'Hi Bibi ',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF333333),
-                              ),
-                            ),
-                            Text('💗', style: TextStyle(fontSize: 18)),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Take best care of your body.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF888888),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+    final careText =
+        LanguageStrings.getTranslation(language, 'life_is_too_short')
+            .replaceAll('[b]', '')
+            .replaceAll('[/b]', '');
 
-                // Avatar — aligned to bottom of container, taller
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                  child: Image.asset(
-                    'assets/images/miss_bibi2.png',
-                    width: 130,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // ── Left: text ─────────────────────────────────────────────
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Text(
+                      'Good Morning, Bibi ',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                    Text('👋', style: TextStyle(fontSize: 14)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  careText,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF888888),
                   ),
                 ),
               ],
             ),
+          ),
+
+          // ── Right: star + globe icons ───────────────────────────────
+          Row(
+            children: [
+              const Icon(Icons.star_border,
+                  color: Color(0xFF888888), size: 22),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onLanguageTap,
+                child: const Icon(Icons.language,
+                    color: Color(0xFF888888), size: 22),
+              ),
+            ],
           ),
         ],
       ),
@@ -302,31 +436,31 @@ class _WelcomeBanner extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Quiz / Progress Card
+// Quiz Card
 // ────────────────────────────────────────────────────────────────────────────
 class _QuizCard extends StatelessWidget {
   final String language;
-
   const _QuizCard({required this.language});
 
   @override
   Widget build(BuildContext context) {
+    final quizTitle = LanguageStrings.getTranslation(language, 'self_examine_card_title');
+    final quizDesc  = LanguageStrings.getTranslation(language, 'self_examine_subtitle');
+    final startBtn  = LanguageStrings.getTranslation(language, 'get_started');
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: const RadialGradient(
           center: Alignment.center,
           radius: 1.2,
-          colors: [
-            Color(0xFFFFBACB), // lighter center
-            Color(0xFFFF7198), // darker outer
-          ],
+          colors: [Color(0xFFFFBACB), Color(0xFFFF7198)],
         ),
       ),
       child: Row(
         children: [
-          // Timer image
+          // ── Timer icon ───────────────────────────────────────────────
           Container(
             width: 52,
             height: 52,
@@ -336,23 +470,20 @@ class _QuizCard extends StatelessWidget {
             ),
             child: Padding(
               padding: const EdgeInsets.all(10),
-              child: Image.asset(
-                'assets/images/timer.png',
-                fit: BoxFit.contain,
-              ),
+              child: Image.asset('assets/images/timer.png', fit: BoxFit.contain),
             ),
           ),
 
           const SizedBox(width: 12),
 
-          // Text
+          // ── Text ─────────────────────────────────────────────────────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Know Your Breast Health',
-                  style: TextStyle(
+                Text(
+                  quizTitle,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: Colors.white,
@@ -372,30 +503,26 @@ class _QuizCard extends StatelessWidget {
                       ),
                       TextSpan(
                         text: 'complete',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Answer 6 questions to learn more\nabout breast cancer risk.',
-                  style: TextStyle(fontSize: 11, color: Colors.white70),
+                Text(
+                  quizDesc,
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
                 ),
               ],
             ),
           ),
 
+          // ── Start button ─────────────────────────────────────────────
           ElevatedButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => QuizPage1(language: language),
-                ),
+                MaterialPageRoute(builder: (context) => const QuizPage1()),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -411,12 +538,12 @@ class _QuizCard extends StatelessWidget {
               ),
               elevation: 0,
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Start your quiz'),
-                SizedBox(width: 4),
-                Icon(Icons.arrow_forward, size: 14),
+                Text(startBtn),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward, size: 14),
               ],
             ),
           ),
@@ -425,7 +552,6 @@ class _QuizCard extends StatelessWidget {
     );
   }
 }
-
 // ────────────────────────────────────────────────────────────────────────────
 // Video Card Data Model
 // ────────────────────────────────────────────────────────────────────────────
@@ -435,6 +561,8 @@ class VideoCardData {
   final String duration;
   final String imagePlaceholder;
   final Color? accentColor;
+  final String? titleKey;
+  final String? subtitleKey;
 
   const VideoCardData({
     required this.title,
@@ -442,6 +570,8 @@ class VideoCardData {
     required this.duration,
     required this.imagePlaceholder,
     this.accentColor,
+    this.titleKey,
+    this.subtitleKey,
   });
 }
 
@@ -450,11 +580,24 @@ class VideoCardData {
 // ────────────────────────────────────────────────────────────────────────────
 class _VideoCard extends StatelessWidget {
   final VideoCardData data;
-
-  const _VideoCard({required this.data});
+  final String language;
+  const _VideoCard({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
+    final title = data.titleKey != null
+        ? LanguageStrings.getTranslation(language, data.titleKey!)
+            .replaceAll('[b]', '')
+            .replaceAll('[/b]', '')
+        : data.title;
+
+    final subtitle = data.subtitleKey != null
+        ? LanguageStrings.getTranslation(language, data.subtitleKey!)
+        : data.subtitle;
+
+    final watchNow =
+        LanguageStrings.getTranslation(language, 'watch_now');
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -470,7 +613,6 @@ class _VideoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Thumbnail ────────────────────────────────────────────────────
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(16)),
@@ -482,8 +624,6 @@ class _VideoCard extends StatelessWidget {
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
-
-                // Duration badge
                 Positioned(
                   top: 10,
                   left: 10,
@@ -500,11 +640,9 @@ class _VideoCard extends StatelessWidget {
                         const Icon(Icons.play_circle_fill,
                             color: Colors.white, size: 12),
                         const SizedBox(width: 3),
-                        Text(
-                          data.duration,
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 11),
-                        ),
+                        Text(data.duration,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 11)),
                       ],
                     ),
                   ),
@@ -512,79 +650,72 @@ class _VideoCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── Card Footer ──────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Row(
               children: [
-                // Title + subtitle
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        data.title,
+                        title,
                         style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: Color(0xFF222222),
-                        ),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Color(0xFF222222)),
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        data.subtitle,
+                        subtitle,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF888888),
-                        ),
+                            fontSize: 12, color: Color(0xFF888888)),
                       ),
                       const SizedBox(height: 10),
-                      // Watch now button
                       GestureDetector(
-                        onTap: () {},
-                       child: Container(
-  padding: const EdgeInsets.symmetric(
-      horizontal: 14, vertical: 7),
-  decoration: BoxDecoration(
-    color: const Color(0xFFF4A7B9).withOpacity(0.15),
-    borderRadius: BorderRadius.circular(20),
-    border: Border.all(
-      color: const Color(0xFFFFB2C7),
-      width: 1.2,
-    ),
-  ),
-  child: const Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        'Watch now',
-        style: TextStyle(
-          color: Color(0xFFE86A8D),
-          fontWeight: FontWeight.w400,
-          fontSize: 12,
-        ),
-      ),
-      SizedBox(width: 2),
-      Icon(Icons.chevron_right,
-          size: 14, color: Color(0xFFE86A8D)),
-    ],
-  ),
-),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AudioPlayerPage(
+                                title: title,
+                                subtitle: subtitle,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4A7B9).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: const Color(0xFFFFB2C7), width: 1.2),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(watchNow,
+                                  style: const TextStyle(
+                                      color: Color(0xFFE86A8D),
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 12)),
+                              const SizedBox(width: 2),
+                              const Icon(Icons.chevron_right,
+                                  size: 14, color: Color(0xFFE86A8D)),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                // Favourite heart
-               GestureDetector(
-  onTap: () {},
-  child: const Icon(
-    Icons.favorite_border,
-    size: 22,
-    color: Color(0xFF8B5E3C),
-  ),
-),
+                GestureDetector(
+                  onTap: () {},
+                  child: const Icon(Icons.favorite_border,
+                      size: 22, color: Color(0xFF8B5E3C)),
+                ),
               ],
             ),
           ),

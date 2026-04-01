@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
@@ -6,8 +8,7 @@ import 'onboarding_page_6.dart';
 import 'onboarding_page_8.dart';
 
 class OnboardingPage7 extends StatefulWidget {
-  final String language;
-  const OnboardingPage7({super.key, required this.language});
+  const OnboardingPage7({super.key});
 
   @override
   State<OnboardingPage7> createState() => _OnboardingPage7State();
@@ -52,29 +53,36 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
     }
   }
 
-  void _navigateNext() {
+  void _navigateNext(String currentLanguage) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => OnboardingPage8(language: widget.language),
+        builder: (_) => const OnboardingPage8(),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final cardTitle = LanguageStrings.getTranslation(
-        widget.language, 'self_examine_card_title');
-    final subtitle = LanguageStrings.getTranslation(
-        widget.language, 'self_examine_subtitle');
-    final watchNow =
-        LanguageStrings.getTranslation(widget.language, 'watch_now');
-    final mainTitle = LanguageStrings.getTranslation(
-        widget.language, 'self_examine_title');
-    final continueText = LanguageStrings.getTranslation(
-        widget.language, 'continue_after_watching');
-    final isUrdu = widget.language == 'اردو';
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        String currentLanguage = 'English';
+        if (state is LanguageSelected) {
+          currentLanguage = state.language;
+        }
 
-    return Scaffold(
+        final cardTitle = LanguageStrings.getTranslation(
+            currentLanguage, 'self_examine_card_title');
+        final subtitle = LanguageStrings.getTranslation(
+            currentLanguage, 'self_examine_subtitle');
+        final watchNow =
+            LanguageStrings.getTranslation(currentLanguage, 'watch_now');
+        final mainTitle = LanguageStrings.getTranslation(
+            currentLanguage, 'self_examine_title');
+        final continueText = LanguageStrings.getTranslation(
+            currentLanguage, 'continue_after_watching');
+        final isUrdu = currentLanguage == 'اردو';
+
+        return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -264,7 +272,7 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
                                             // Continue button — shown after Watch Now
                                             if (_showContinue)
                                               GestureDetector(
-                                                onTap: _navigateNext,
+                                                onTap: () => _navigateNext(currentLanguage),
                                                 child: Container(
                                                   padding: const EdgeInsets
                                                       .symmetric(
@@ -376,16 +384,14 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
                       onBackPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                OnboardingPage6(language: widget.language),
+                            builder: (_) => const OnboardingPage6(),
                           ),
                         );
                       },
                       onNextPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                OnboardingPage8(language: widget.language),
+                            builder: (_) => const OnboardingPage8(),
                           ),
                         );
                       },
@@ -399,6 +405,8 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
           },
         ),
       ),
+    );
+      },
     );
   }
 }

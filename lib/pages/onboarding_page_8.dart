@@ -1,13 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import '../services/language_strings.dart';
 import 'onboarding_page_7.dart';
 import 'onboarding_page_9.dart';
 
 class OnboardingPage8 extends StatefulWidget {
-  final String language;
-  const OnboardingPage8({super.key, required this.language});
+  const OnboardingPage8({super.key});
 
   @override
   State<OnboardingPage8> createState() => _OnboardingPage8State();
@@ -65,16 +66,23 @@ class _OnboardingPage8State extends State<OnboardingPage8>
 
   @override
   Widget build(BuildContext context) {
-    final howToTreat =
-        LanguageStrings.getTranslation(widget.language, 'how_to_treat_title');
-    final labels = [
-      LanguageStrings.getTranslation(widget.language, 'radiation'),
-      LanguageStrings.getTranslation(widget.language, 'chemotherapy'),
-      LanguageStrings.getTranslation(widget.language, 'hormonal_tablets'),
-      LanguageStrings.getTranslation(widget.language, 'surgery'),
-    ];
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        String currentLanguage = 'English';
+        if (state is LanguageSelected) {
+          currentLanguage = state.language;
+        }
 
-    return Scaffold(
+        final howToTreat =
+            LanguageStrings.getTranslation(currentLanguage, 'how_to_treat_title');
+        final labels = [
+          LanguageStrings.getTranslation(currentLanguage, 'radiation'),
+          LanguageStrings.getTranslation(currentLanguage, 'chemotherapy'),
+          LanguageStrings.getTranslation(currentLanguage, 'hormonal_tablets'),
+          LanguageStrings.getTranslation(currentLanguage, 'surgery'),
+        ];
+
+        return Scaffold(
       body: SafeArea(
         child: Container(
           width: double.infinity,
@@ -247,16 +255,14 @@ class _OnboardingPage8State extends State<OnboardingPage8>
                   onBackPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (_) =>
-                            OnboardingPage7(language: widget.language),
+                        builder: (_) => const OnboardingPage7(),
                       ),
                     );
                   },
                   onNextPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (_) =>
-                            OnboardingPage9(language: widget.language),
+                        builder: (_) => const OnboardingPage9(),
                       ),
                     );
                   },
@@ -267,6 +273,8 @@ class _OnboardingPage8State extends State<OnboardingPage8>
           ),
         ),
       ),
+    );
+      },
     );
   }
 

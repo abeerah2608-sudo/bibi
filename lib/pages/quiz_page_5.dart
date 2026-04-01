@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import '../widgets/quiz_yes_no_button.dart';
 import 'quiz_page_6.dart';
 
 class QuizPage5 extends StatefulWidget {
-  final String language;
-
-  const QuizPage5({super.key, required this.language});
+  const QuizPage5({super.key});
 
   @override
   State<QuizPage5> createState() => _QuizPage5State();
@@ -16,13 +16,15 @@ class _QuizPage5State extends State<QuizPage5> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [Color(0xFFF5A6C2), Color(0xFFFFB6D9)],
           ),
@@ -180,7 +182,7 @@ class _QuizPage5State extends State<QuizPage5> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              QuizPage6(language: widget.language),
+                              const QuizPage6(),
                         ),
                       );
                     },
@@ -205,6 +207,8 @@ class _QuizPage5State extends State<QuizPage5> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

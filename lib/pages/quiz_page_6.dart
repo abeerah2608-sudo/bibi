@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import '../widgets/quiz_yes_no_button.dart';
 
 class QuizPage6 extends StatefulWidget {
-  final String language;
-
-  const QuizPage6({super.key, required this.language});
+  const QuizPage6({super.key});
 
   @override
   State<QuizPage6> createState() => _QuizPage6State();
@@ -15,13 +15,15 @@ class _QuizPage6State extends State<QuizPage6> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [Color(0xFFF5A6C2), Color(0xFFFFB6D9)],
           ),
@@ -173,6 +175,8 @@ class _QuizPage6State extends State<QuizPage6> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

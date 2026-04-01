@@ -226,9 +226,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                               );
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => OnboardingPage1(
-                                language: _selectedLanguage!,
-                              ),
+                              builder: (context) => const OnboardingPage1(),
                             ),
                           );
                         }

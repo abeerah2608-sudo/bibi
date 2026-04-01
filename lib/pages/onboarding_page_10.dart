@@ -1,5 +1,7 @@
 import 'package:bibi/pages/dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import '../services/language_strings.dart';
 import 'onboarding_page_9.dart';
@@ -19,12 +21,7 @@ class _FoodItem {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 class OnboardingPage10 extends StatefulWidget {
-  final String language;
-
-  const OnboardingPage10({
-    super.key,
-    required this.language,
-  });
+  const OnboardingPage10({super.key});
 
   @override
   State<OnboardingPage10> createState() => _OnboardingPage10State();
@@ -109,15 +106,15 @@ class _OnboardingPage10State extends State<OnboardingPage10>
     super.dispose();
   }
 
-  String _label(int index) {
+  String _label(int index, String currentLanguage) {
     final item = _items[index];
-    if (widget.language == 'اردو') {
-      return LanguageStrings.getTranslation(widget.language, item.labelKey);
+    if (currentLanguage == 'اردو') {
+      return LanguageStrings.getTranslation(currentLanguage, item.labelKey);
     }
     return item.labelFallback;
   }
 
-  Widget _buildItem(int index, {double circleDiameter = 104}) {
+  Widget _buildItem(int index, String currentLanguage, {double circleDiameter = 104}) {
     final item = _items[index];
     final anim = _itemAnimations[index];
 
@@ -150,7 +147,7 @@ class _OnboardingPage10State extends State<OnboardingPage10>
           SizedBox(
             width: circleDiameter + 12,
             child: Text(
-              _label(index),
+              _label(index, currentLanguage),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontFamily: 'Inter',
@@ -168,10 +165,17 @@ class _OnboardingPage10State extends State<OnboardingPage10>
 
   @override
   Widget build(BuildContext context) {
-    final howToSupport =
-        LanguageStrings.getTranslation(widget.language, 'how_to_support_title');
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        String currentLanguage = 'English';
+        if (state is LanguageSelected) {
+          currentLanguage = state.language;
+        }
 
-    return Scaffold(
+        final howToSupport =
+            LanguageStrings.getTranslation(currentLanguage, 'how_to_support_title');
+
+        return Scaffold(
       body: SafeArea(
         child: Container(
           width: double.infinity,
@@ -197,18 +201,18 @@ class _OnboardingPage10State extends State<OnboardingPage10>
                     children: [
                       Column(
                         children: [
-                          Center(child: _buildItem(0, circleDiameter: 112)),
+                          Center(child: _buildItem(0, currentLanguage, circleDiameter: 112)),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [_buildItem(1), _buildItem(2)],
+                            children: [_buildItem(1, currentLanguage), _buildItem(2, currentLanguage)],
                           ),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [_buildItem(3), _buildItem(4)],
+                            children: [_buildItem(3, currentLanguage), _buildItem(4, currentLanguage)],
                           ),
                         ],
                       ),
@@ -244,15 +248,15 @@ class _OnboardingPage10State extends State<OnboardingPage10>
                   onBackPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (_) => OnboardingPage9(language: widget.language),
+                        builder: (_) => const OnboardingPage9(),
                       ),
                     );
                   },
-                  // Next button goes to page 9 (same as page)
+                  // Next button goes to dashboard
                   onNextPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (_) => DashboardScreen(language: widget.language),
+                        builder: (_) => const DashboardScreen(),
                       ),
                     );
                   },
@@ -264,6 +268,8 @@ class _OnboardingPage10State extends State<OnboardingPage10>
           ),
         ),
       ),
+    );
+      },
     );
   }
 }

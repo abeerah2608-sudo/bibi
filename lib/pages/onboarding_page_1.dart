@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import '../widgets/cached_logo_image.dart';
@@ -6,9 +8,7 @@ import '../utils/text_parsing_utils.dart';
 import 'onboarding_page_2.dart';
 
 class OnboardingPage1 extends StatefulWidget {
-  final String language;
-
-  const OnboardingPage1({super.key, required this.language});
+  const OnboardingPage1({super.key});
 
   @override
   State<OnboardingPage1> createState() => _OnboardingPage1State();
@@ -29,69 +29,77 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
 
   @override
   Widget build(BuildContext context) {
-    final title = LanguageStrings.getTranslation(widget.language, 'assalam_o_alaikum');
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        String currentLanguage = 'English';
+        if (state is LanguageSelected) {
+          currentLanguage = state.language;
+        }
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: const Color(0xFFFFF4F4),
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-            const CachedLogoImage(height: 100, width: 100),
+        final title = LanguageStrings.getTranslation(currentLanguage, 'assalam_o_alaikum');
 
-            Expanded(
-              child: Stack(
-                children: [
-                  const OnboardingAnimation(
-                    assetPath: 'assets/images/Bibi_Onboarding_Leftt.lottie',
-                  ),
+        return Scaffold(
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: const Color(0xFFFFF4F4),
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
+                const CachedLogoImage(height: 100, width: 100),
 
-                  Positioned(
-                    top: 190,
-                    left: MediaQuery.of(context).size.width * 0.5 + 16,
-                    right: 16,
-                    child: AnimatedSlide(
-                      offset: _showText ? Offset.zero : const Offset(0, 0.15),
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOutCubic,
-                      child: AnimatedOpacity(
-                        opacity: _showText ? 1 : 0,
-                        duration: const Duration(milliseconds: 500),
-                        child: TextParsingUtils.parseBold(title),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      const OnboardingAnimation(
+                        assetPath: 'assets/images/Bibi_Onboarding_Leftt.lottie',
                       ),
-                    ),
-                  ),
-                  // Page indicator
-                  Positioned(
-                    bottom: 50,
-                    left: 0,
-                    right: 0,
-                    child: OnboardingPageIndicator(currentPage: 0, totalPages: 10),
-                  ),
-                  // Navigation buttons
-                  Positioned(
-                    bottom: 24,
-                    left: 0,
-                    right: 0,
-                    child: OnboardingNavigationButtons(
-                      showBackButton: false,
-                      onNextPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                OnboardingPage2(language: widget.language),
+                      Positioned(
+                        top: 190,
+                        left: MediaQuery.of(context).size.width * 0.5 + 16,
+                        right: 16,
+                        child: AnimatedSlide(
+                          offset: _showText ? Offset.zero : const Offset(0, 0.15),
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeOutCubic,
+                          child: AnimatedOpacity(
+                            opacity: _showText ? 1 : 0,
+                            duration: const Duration(milliseconds: 500),
+                            child: TextParsingUtils.parseBold(title),
                           ),
-                        );
-                      },
-                    ),
-                  ),                ],
-              ),
+                        ),
+                      ),
+                      // Page indicator
+                      Positioned(
+                        bottom: 50,
+                        left: 0,
+                        right: 0,
+                        child: OnboardingPageIndicator(currentPage: 0, totalPages: 10),
+                      ),
+                      // Navigation buttons
+                      Positioned(
+                        bottom: 24,
+                        left: 0,
+                        right: 0,
+                        child: OnboardingNavigationButtons(
+                          showBackButton: false,
+                          onNextPressed: () {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const OnboardingPage2(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+      );
+      },
     );
   }
 }

@@ -116,7 +116,7 @@ static String getTranslation(String language, String key) {
       return RomanUrdu[key] ?? key;
     }
 
-    if (language == 'اردو') {
+    if (language == 'اردو' || language == 'Urdu') {
       return urdu[key] ?? key;
     }
 
