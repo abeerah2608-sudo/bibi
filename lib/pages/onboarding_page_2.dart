@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/language_strings.dart';
-import '../utils/smooth_page_route.dart';
+import '../widgets/onboarding_widgets_exports.dart';
+import '../widgets/cached_logo_image.dart';
+import '../utils/text_parsing_utils.dart';
 import 'onboarding_page_1.dart';
 import 'onboarding_page_3.dart';
 
-class OnboardingPage2 extends StatelessWidget {
+class OnboardingPage2 extends StatefulWidget {
   final String language;
 
   const OnboardingPage2({
@@ -13,8 +15,25 @@ class OnboardingPage2 extends StatelessWidget {
   });
 
   @override
+  State<OnboardingPage2> createState() => _OnboardingPage2State();
+}
+
+class _OnboardingPage2State extends State<OnboardingPage2> {
+  bool _showText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() => _showText = true);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final title = LanguageStrings.getTranslation(language, 'im_bibi');
+    final title = LanguageStrings.getTranslation(widget.language, 'im_bibi');
 
     return Scaffold(
       body: Container(
@@ -24,90 +43,55 @@ class OnboardingPage2 extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 60),
-
-            Image.asset(
-              'assets/images/Bibi_Logo_Vector 1.png',
-              height: 100,
-              width: 100,
-            ),
-
+            const CachedLogoImage(height: 100, width: 100),
             Expanded(
               child: Stack(
                 children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()..scale(-1.0, 1.0),
-                      child: Transform.translate(
-                        offset: const Offset(0, -40),
-                        child: Image.asset(
-                          'assets/images/ms_bibi.png',
-                          height: 450,
-                          fit: BoxFit.cover,
-                        ),
+                  const OnboardingAnimation(
+                    assetPath: 'assets/images/Bibi_Onboarding_Leftt.lottie',
+                  ),
+                  Positioned(
+                    top: 190,
+                    left: MediaQuery.of(context).size.width * 0.5 + 16,
+                    right: 16,
+                    child: AnimatedSlide(
+                      offset: _showText ? Offset.zero : const Offset(0, 0.15),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOutCubic,
+                      child: AnimatedOpacity(
+                        opacity: _showText ? 1 : 0,
+                        duration: const Duration(milliseconds: 500),
+                        child: TextParsingUtils.parseBold(title),
                       ),
                     ),
                   ),
-
+                  // Page indicator
                   Positioned(
-                    top: 165,
-                    left: 16,
-                    right: MediaQuery.of(context).size.width * 0.5 + 16,
-                    child: parseBold(title),
+                    bottom: 50,
+                    left: 0,
+                    right: 0,
+                    child: OnboardingPageIndicator(currentPage: 1, totalPages: 10),
                   ),
-
-                  // BACK button
+                  // Navigation buttons
                   Positioned(
                     bottom: 24,
-                    left: 24,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          SmoothPageRoute(
-                            page: OnboardingPage1(language: language),
+                    left: 0,
+                    right: 0,
+                    child: OnboardingNavigationButtons(
+                      onBackPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => OnboardingPage1(language: widget.language),
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFFE86A8D), width: 2),
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xFFE86A8D),
-                        size: 24,
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    bottom: 24,
-                    right: 24,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          SmoothPageRoute(
-                            page: OnboardingPage3(language: language),
+                      onNextPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => OnboardingPage3(language: widget.language),
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE86A8D),
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                        size: 24,
-                      ),
                     ),
                   ),
                 ],

@@ -28,13 +28,32 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Disable Impeller (GPU rendering engine that can cause crashes on some devices)
+        manifestPlaceholders["enableImpeller"] = "false"
+        
+        // Optimize for GPU rendering - reduce memory pressure
+        multiDexEnabled = true
     }
-
+    
     buildTypes {
-        release {
+        getByName("debug") {
+            // Disable ProGuard/R8 for debug builds to improve build speed
+            isMinifyEnabled = false
+            // Ensure Impeller is disabled for debug builds
+            manifestPlaceholders["enableImpeller"] = "false"
+        }
+        
+        getByName("release") {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            
+            // Disable minification to avoid R8 issues with Google Play Core
+            isMinifyEnabled = false
+            isShrinkResources = false
+            // Ensure Impeller is disabled for release builds
+            manifestPlaceholders["enableImpeller"] = "false"
         }
     }
 }

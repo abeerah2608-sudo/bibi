@@ -12,6 +12,9 @@ dependencies:
   flutter_bloc: ^9.0.0
   bloc: ^9.0.0
   equatable: ^2.0.5
+  lottie: ^3.3.2
+  dotlottie_loader: ^0.0.5
+  url_launcher: ^6.2.0
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +39,8 @@ flutter:
           weight: 400
         - asset: assets/fonts/EduAUVICWANTHand-Bold.ttf
           weight: 900
+    - family: Inter 
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+          weight: 700
+           

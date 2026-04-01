@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/cached_logo_image.dart';
 import 'languageSelection.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -29,20 +30,9 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-       color : Color(0xFFFFF5F5),
-        child: Center(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Color(0xFFFFF5F5),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            padding: EdgeInsets.all(40.0),
-            child: Image.asset(
-              'assets/images/Bibi_Logo_Vector 1.png',
-              height: 200,
-              width: 200,
-            ),
-          ),
+        color: const Color(0xFFFFF5F5),
+        child: const Center(
+          child: CachedLogoImage(height: 200, width: 200),
         ),
       ),
     );

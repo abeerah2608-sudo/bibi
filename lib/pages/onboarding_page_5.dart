@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
-import '../widgets/cached_logo_image.dart';
-import '../utils/text_parsing_utils.dart';
-import 'onboarding_page_2.dart';
+import '../widgets/onboarding_widgets_exports.dart';
 import 'onboarding_page_4.dart';
+import 'onboarding_page_6.dart';
 
-class OnboardingPage3 extends StatefulWidget {
+class OnboardingPage5 extends StatefulWidget {
   final String language;
 
-  const OnboardingPage3({super.key, required this.language});
+  const OnboardingPage5({super.key, required this.language});
 
   @override
-  State<OnboardingPage3> createState() => _OnboardingPage3State();
+  State<OnboardingPage5> createState() => _OnboardingPage5State();
 }
 
-class _OnboardingPage3State extends State<OnboardingPage3> {
+class _OnboardingPage5State extends State<OnboardingPage5> {
   bool _showText = false;
 
   @override
@@ -30,7 +29,7 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
 
   @override
   Widget build(BuildContext context) {
-    final title = LanguageStrings.getTranslation(widget.language, 'breast_cancer');
+    final title = LanguageStrings.getTranslation(widget.language, 'cancer_cell');
 
     return Scaffold(
       body: Container(
@@ -40,19 +39,28 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
         child: Column(
           children: [
             const SizedBox(height: 60),
-            const CachedLogoImage(height: 100, width: 100),
+
+            Image.asset(
+              'assets/images/Bibi_Logo_Vector 1.png',
+              height: 100,
+              width: 100,
+            ),
 
             Expanded(
               child: Stack(
                 children: [
+                  // Cancer cell animation
                   const OnboardingAnimation(
-                    assetPath: 'assets/images/Bibi_Onboarding_Leftt.lottie',
+                    assetPath: 'assets/images/Cancer Cell Animation from Bibi Project (1).lottie',
+                    translateX: 0,
+                    translateY: -40,
+                    repeat: false,
                   ),
 
                   Positioned(
-                    top: 175,
-                    left: MediaQuery.of(context).size.width * 0.5 + 16,
-                    right: 8,
+                    bottom: 130,
+                    left: 0,
+                    right: 0,
                     child: AnimatedSlide(
                       offset: _showText ? Offset.zero : const Offset(0, 0.15),
                       duration: const Duration(milliseconds: 600),
@@ -60,7 +68,21 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
                       child: AnimatedOpacity(
                         opacity: _showText ? 1 : 0,
                         duration: const Duration(milliseconds: 500),
-                        child: TextParsingUtils.parseBold(title),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              title,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF8B5E3C),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -70,7 +92,7 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
                     bottom: 50,
                     left: 0,
                     right: 0,
-                    child: OnboardingPageIndicator(currentPage: 2, totalPages: 10),
+                    child: OnboardingPageIndicator(currentPage: 4, totalPages: 10),
                   ),
 
                   // Navigation buttons
@@ -82,14 +104,14 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
                       onBackPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => OnboardingPage2(language: widget.language),
+                            builder: (context) => OnboardingPage4(language: widget.language),
                           ),
                         );
                       },
                       onNextPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => OnboardingPage4(language: widget.language),
+                            builder: (context) => OnboardingPage6(language: widget.language),
                           ),
                         );
                       },
