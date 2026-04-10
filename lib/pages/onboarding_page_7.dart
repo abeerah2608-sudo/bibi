@@ -33,10 +33,12 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
   String _currentLanguage = 'English';
   String _loadedAudioPath = '';
 
-  String get _currentAudioPath {
-    return _currentLanguage == 'Urdu' ? _urduAudio : _englishAudio;
+String get _currentAudioPath {
+  if (_currentLanguage == 'اردو' || _currentLanguage == 'Urdu' || _currentLanguage == 'Roman Urdu') {
+    return _urduAudio;
   }
-
+  return _englishAudio;
+}
   @override
   void initState() {
     super.initState();
@@ -422,7 +424,7 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         color: Color(0xFF8B5E3C),
                           height: 1.3,
                         ),
@@ -432,7 +434,6 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
 
                   const SizedBox(height: 12),
 
-                  OnboardingPageIndicator(currentPage: 9, totalPages: 14),
 
                   const SizedBox(height: 10),
 

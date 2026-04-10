@@ -6,6 +6,7 @@ import '../services/language_strings.dart';
 import '../services/quiz_service.dart';
 import '../widgets/quiz_yes_no_button.dart';
 import 'quiz_completion_page.dart';
+import 'package:bibi/pages/dashboard.dart';
 
 class QuizPage1 extends StatefulWidget {
   const QuizPage1({super.key});
@@ -38,10 +39,8 @@ class _QuizPage1State extends State<QuizPage1> {
       QuizQuestion(number: 6, textKey: 'quiz_q6'),
     ];
 
-    // Initialize quiz progress if not exists
     await QuizService.initializeQuizProgress(_quizId, _questions.length);
 
-    // Load saved progress
     final progress = await QuizService.getQuizProgress(_quizId);
     if (progress != null && mounted) {
       setState(() {
@@ -51,12 +50,10 @@ class _QuizPage1State extends State<QuizPage1> {
         _isLoading = false;
       });
     } else {
-      if (mounted) {
-        setState(() {
-          _allAnswers = List<String?>.filled(_questions.length, null);
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _allAnswers = List<String?>.filled(_questions.length, null);
+        _isLoading = false;
+      });
     }
   }
 
@@ -66,29 +63,26 @@ class _QuizPage1State extends State<QuizPage1> {
         const SnackBar(
           content: Text('Please select an option before continuing'),
           backgroundColor: Color(0xFFE86A8D),
-          duration: Duration(seconds: 2),
         ),
       );
       return;
     }
 
-    // Save current answer
     _allAnswers[_currentQuestion] = _selectedAnswer;
     await QuizService.saveAnswer(_quizId, _currentQuestion, _selectedAnswer!);
 
     if (_currentQuestion < _questions.length - 1) {
-      // Move to next question
       await QuizService.updateCurrentQuestion(_quizId, _currentQuestion + 1);
-      if (mounted) {
-        setState(() {
-          _currentQuestion++;
-          _selectedAnswer = _allAnswers[_currentQuestion];
-        });
-      }
+
+      setState(() {
+        _currentQuestion++;
+        _selectedAnswer = _allAnswers[_currentQuestion];
+      });
     } else {
-      // Quiz completed
       await QuizService.completeQuiz(_quizId);
-      final completedCount = _allAnswers.where((a) => a != null).length;
+
+      final completedCount =
+          _allAnswers.where((a) => a != null).length;
 
       if (mounted) {
         Navigator.push(
@@ -107,19 +101,21 @@ class _QuizPage1State extends State<QuizPage1> {
 
   void _previousQuestion() async {
     if (_currentQuestion > 0) {
-      // Save current answer before going back
       if (_selectedAnswer != null) {
         _allAnswers[_currentQuestion] = _selectedAnswer;
-        await QuizService.saveAnswer(_quizId, _currentQuestion, _selectedAnswer!);
+        await QuizService.saveAnswer(
+          _quizId,
+          _currentQuestion,
+          _selectedAnswer!,
+        );
       }
 
       await QuizService.updateCurrentQuestion(_quizId, _currentQuestion - 1);
-      if (mounted) {
-        setState(() {
-          _currentQuestion--;
-          _selectedAnswer = _allAnswers[_currentQuestion];
-        });
-      }
+
+      setState(() {
+        _currentQuestion--;
+        _selectedAnswer = _allAnswers[_currentQuestion];
+      });
     }
   }
 
@@ -128,18 +124,17 @@ class _QuizPage1State extends State<QuizPage1> {
     return BlocBuilder<LanguageBloc, LanguageState>(
       builder: (context, state) {
         String currentLanguage = 'English';
+
         if (state is LanguageSelected) {
           currentLanguage = state.language;
         }
 
         if (_isLoading) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFFCEEF3),
+          return const Scaffold(
+            backgroundColor: Color(0xFFFCEEF3),
             body: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  const Color(0xFFE86A8D),
-                ),
+                color: Color(0xFFE86A8D),
               ),
             ),
           );
@@ -147,28 +142,46 @@ class _QuizPage1State extends State<QuizPage1> {
 
         return Scaffold(
           backgroundColor: const Color(0xFFFCEEF3),
+
           body: Stack(
             children: [
-              // ── Top pink panel — straight sides, gentle curved bottom ──────
+              // 🔥 TOP HEADER WITH BUBBLES
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: ClipPath(
                   clipper: _CurvedBottomClipper(),
-                  child: Container(
+                  child: SizedBox(
                     height: 230,
-                    color: const Color(0xFFFFA6BD),
+                    child: Stack(
+                      children: [
+                        Container(
+                          color: const Color(0xFFFFA6BD),
+                        ),
+
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _BubblePainter(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
-              // ── Back arrow ──────────────────────────────────────────────────
+              // BACK BUTTON
               Positioned(
                 top: 48,
                 left: 20,
                 child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () => Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const DashboardScreen()),
+                    (route) => false,
+                  ),
                   child: Container(
                     width: 36,
                     height: 36,
@@ -185,9 +198,7 @@ class _QuizPage1State extends State<QuizPage1> {
                 ),
               ),
 
-
-
-              // ── Main content ─────────────────────────────────────────────────
+              // MAIN CONTENT
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -196,23 +207,23 @@ class _QuizPage1State extends State<QuizPage1> {
                     children: [
                       const SizedBox(height: 56),
 
-                      // ── Question card with floating progress circle ────────
+                      // QUESTION CARD
                       Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.topCenter,
                         children: [
-                          // White card
                           Container(
                             margin: const EdgeInsets.only(top: 44),
-                            padding: const EdgeInsets.fromLTRB(28, 52, 28, 32),
+                            padding: const EdgeInsets.fromLTRB(
+                                28, 52, 28, 32),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(28),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFFFA6BD).withOpacity(0.25),
+                                  color: const Color(0xFFFFA6BD)
+                                      .withOpacity(0.25),
                                   blurRadius: 20,
-                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
@@ -221,10 +232,8 @@ class _QuizPage1State extends State<QuizPage1> {
                                 Text(
                                   'Question ${_questions[_currentQuestion].number}/6',
                                   style: const TextStyle(
-                                    fontSize: 13,
                                     color: Color(0xFFE86A8D),
                                     fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.4,
                                   ),
                                 ),
                                 const SizedBox(height: 20),
@@ -238,20 +247,21 @@ class _QuizPage1State extends State<QuizPage1> {
                                     fontSize: 17,
                                     color: Color(0xFF5D3A3A),
                                     fontWeight: FontWeight.w600,
-                                    height: 1.5,
                                   ),
                                 ),
                               ],
                             ),
                           ),
 
-                          // Progress circle — floats above card
                           Positioned(
                             top: 0,
                             child: _ProgressCircle(
                               current: _questions[_currentQuestion].number,
                               total: 6,
-                              label: _questions[_currentQuestion].number.toString().padLeft(2, '0'),
+                              label: _questions[_currentQuestion]
+                                  .number
+                                  .toString()
+                                  .padLeft(2, '0'),
                               size: 80,
                             ),
                           ),
@@ -260,75 +270,50 @@ class _QuizPage1State extends State<QuizPage1> {
 
                       const SizedBox(height: 28),
 
-                      // ── Answer buttons ────────────────────────────────────
                       _AnswerButton(
                         label: 'A',
                         text: 'Yes',
                         isSelected: _selectedAnswer == 'Yes',
-                        onPressed: () => setState(() => _selectedAnswer = 'Yes'),
+                        onPressed: () =>
+                            setState(() => _selectedAnswer = 'Yes'),
                       ),
                       const SizedBox(height: 12),
                       _AnswerButton(
                         label: 'B',
                         text: 'No',
                         isSelected: _selectedAnswer == 'No',
-                        onPressed: () => setState(() => _selectedAnswer = 'No'),
+                        onPressed: () =>
+                            setState(() => _selectedAnswer = 'No'),
                       ),
 
                       const Spacer(),
 
-                      // ── Navigation buttons ────────────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Back button — only shown if not first question
                           if (_currentQuestion > 0)
                             ElevatedButton(
                               onPressed: _previousQuestion,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE86A8D),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 28,
-                                  vertical: 14,
-                                ),
-                                elevation: 4,
-                                shadowColor: const Color(0xFFE86A8D).withOpacity(0.4),
+                                backgroundColor:
+                                    const Color(0xFFE86A8D),
                               ),
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                                size: 22,
-                              ),
+                              child: const Icon(Icons.arrow_back),
                             )
                           else
                             const SizedBox(width: 56),
 
-                          // Next button
                           ElevatedButton(
                             onPressed: _nextQuestion,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE86A8D),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 28,
-                                vertical: 14,
-                              ),
-                              elevation: 4,
-                              shadowColor: const Color(0xFFE86A8D).withOpacity(0.4),
+                              backgroundColor:
+                                  const Color(0xFFE86A8D),
                             ),
-                            child: const Icon(
-                              Icons.arrow_forward,
-                              color: Colors.white,
-                              size: 22,
-                            ),
+                            child: const Icon(Icons.arrow_forward),
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 28),
                     ],
                   ),
@@ -545,3 +530,56 @@ class QuizQuestion {
   });
 }
 
+class _BubblePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    // 🎯 SAFE-SPACED layout (manually collision-proof)
+    final bubbles = [
+      // top row
+      _Bubble(Offset(size.width * 0.20, size.height * 0.20), 40),
+      _Bubble(Offset(size.width * 0.50, size.height * 0.18), 45),
+      _Bubble(Offset(size.width * 0.80, size.height * 0.22), 38),
+
+      // bottom row
+      _Bubble(Offset(size.width * 0.25, size.height * 0.55), 48),
+      _Bubble(Offset(size.width * 0.70, size.height * 0.58), 42),
+    ];
+
+    // 🧠 Draw main bubbles (guaranteed no overlap by design)
+    for (final b in bubbles) {
+      paint.color = Colors.white.withOpacity(0.12);
+      canvas.drawCircle(b.offset, b.radius, paint);
+    }
+
+    // 🌫 Edge semi-circles (kept OUTSIDE layout space)
+    paint.color = Colors.white.withOpacity(0.08);
+
+    // left edge cut bubble
+    canvas.drawCircle(
+      Offset(-30, size.height * 0.25),
+      65,
+      paint,
+    );
+
+    // right edge cut bubble
+    canvas.drawCircle(
+      Offset(size.width + 30, size.height * 0.40),
+      70,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _Bubble {
+  final Offset offset;
+  final double radius;
+
+  _Bubble(this.offset, this.radius);
+}

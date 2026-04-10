@@ -98,7 +98,6 @@ class _OnboardingPage11State extends State<OnboardingPage11>
                   ),
                 ),
                 const SizedBox(height: 8),
-                OnboardingPageIndicator(currentPage: 13, totalPages: 14),
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),

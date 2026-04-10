@@ -49,9 +49,9 @@ class _OnboardingPage9State extends State<OnboardingPage9>
 
   static const List<_FoodItem> _items = [
     _FoodItem(
-      asset: 'assets/images/milk.png',
-      labelKey: 'drink_milk',
-      labelFallback: 'Drink milk',
+      asset: 'assets/images/fruitsandveg.png',
+      labelKey: 'fruit_and_vegetables',
+      labelFallback: 'Fruits and Vegetables',
     ),
     _FoodItem(
       asset: 'assets/images/fish.png',
@@ -267,7 +267,6 @@ class _OnboardingPage9State extends State<OnboardingPage9>
 
                   const SizedBox(height: 8),
 
-                  OnboardingPageIndicator(currentPage: 11, totalPages: 14),
 
                   const SizedBox(height: 10),
 

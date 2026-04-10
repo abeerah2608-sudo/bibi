@@ -1,3 +1,4 @@
+import 'package:bibi/pages/onboarding_page_1.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/bloc_exports.dart';
@@ -5,7 +6,6 @@ import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import '../widgets/cached_logo_image.dart';
 import '../utils/text_parsing_utils.dart';
-import 'onboarding_page_4.dart';
 import 'onboarding_page_4ii.dart';
 import '../mixins/onboarding_audio_mixin.dart'; // ✅ import mixin
 
@@ -117,7 +117,7 @@ super.initState();
                         stopAudio(); // ✅ stop audio before navigating
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => const OnboardingPage4(),
+                            builder: (context) => const OnboardingFlow(),
                           ),
                         );
                       },

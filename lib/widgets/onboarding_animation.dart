@@ -2,25 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:dotlottie_loader/dotlottie_loader.dart';
 
-/// Optimized animation widget for Impeller GPU rendering
-/// 
-/// Properly loads compressed .lottie files by:
-/// - Using DotLottieLoader to decompress the .lottie zip container
-/// - Rendering via Lottie.memory for GPU optimization
-/// - Caching decompressed animations
-/// - RepaintBoundary for efficient GPU layer management
 class OnboardingAnimation extends StatefulWidget {
   final String assetPath;
-  final double translateX;
-  final double translateY;
+
+  /// Values are SCREEN PERCENTAGES:
+  /// 0.0 = no movement
+  /// 0.1 = 10% of screen
+  /// -0.1 = move up/left
+  final double translateXPercent;
+  final double translateYPercent;
+
   final bool repeat;
+  final Alignment alignment;
+  final double scale;
 
   const OnboardingAnimation({
     super.key,
     required this.assetPath,
-    this.translateX = -160,
-    this.translateY = -40,
+    this.translateXPercent = 0.0,
+    this.translateYPercent = 0.0,
+    this.scale = 1.0,
     this.repeat = true,
+    this.alignment = Alignment.center,
   });
 
   @override
@@ -31,27 +34,36 @@ class _OnboardingAnimationState extends State<OnboardingAnimation> {
   @override
   void initState() {
     super.initState();
-    print('🎬 Loading animation: ${widget.assetPath}');
+    debugPrint('🎬 Loading animation: ${widget.assetPath}');
   }
 
   @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width * 0.5;
-    final height = 450.0;
+Widget build(BuildContext context) {
+  final size = MediaQuery.of(context).size;
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Transform.translate(
-        offset: Offset(widget.translateX, widget.translateY),
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: RepaintBoundary(
+  final screenWidth = size.width;
+  final screenHeight = size.height;
+
+  final baseW = screenWidth * 0.5;
+  final baseH = screenHeight * 0.6;
+
+  return RepaintBoundary(
+    child: Transform.translate(
+      offset: Offset(
+        screenWidth * widget.translateXPercent,
+        screenHeight * widget.translateYPercent,
+      ),
+      child: Transform.scale(
+        scale: widget.scale,
+        child: Align(
+          alignment: widget.alignment,
+          child: SizedBox(
+            width: baseW,
+            height: baseH,
             child: DotLottieLoader.fromAsset(
               widget.assetPath,
               frameBuilder: (context, dotLottie) {
                 if (dotLottie == null) {
-                  print('⏳ Decompressing: ${widget.assetPath}');
                   return const Center(
                     child: SizedBox(
                       width: 40,
@@ -62,18 +74,14 @@ class _OnboardingAnimationState extends State<OnboardingAnimation> {
                 }
 
                 if (dotLottie.animations.isEmpty) {
-                  print('⚠️ No animations in ${widget.assetPath}');
                   return const SizedBox.shrink();
                 }
 
-                print('✅ Loaded: ${widget.assetPath}');
-
                 return Lottie.memory(
                   dotLottie.animations.values.first,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   alignment: Alignment.center,
                   repeat: widget.repeat,
-                  reverse: false,
                   animate: true,
                   imageProviderFactory: (asset) {
                     if (dotLottie.images.containsKey(asset.fileName)) {
@@ -84,16 +92,14 @@ class _OnboardingAnimationState extends State<OnboardingAnimation> {
                 );
               },
               errorBuilder: (context, error, stackTrace) {
-                print('❌ Error loading ${widget.assetPath}: $error');
-                return Container(
-                  color: Colors.transparent,
-                  child: const SizedBox.shrink(),
-                );
+                debugPrint('❌ Lottie error: $error');
+                return const SizedBox.shrink();
               },
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

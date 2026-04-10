@@ -125,7 +125,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                         ),
 
                         Positioned(
-                          top: 80,
+                          bottom: 20,
                           left: 0,
                           right: 0,
                           child: AnimatedSlide(
@@ -146,7 +146,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         fontFamily: 'Inter',
-                                        fontSize: 22,
+                                        fontSize: 32,
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF8B5E3C),
                                       ),
@@ -162,7 +162,6 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                   ),
 
                   const SizedBox(height: 8),
-                  OnboardingPageIndicator(currentPage: 8, totalPages: 14),
                   const SizedBox(height: 10),
 
                   Padding(

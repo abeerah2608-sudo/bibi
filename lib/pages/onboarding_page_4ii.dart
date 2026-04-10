@@ -86,7 +86,7 @@ class _OnboardingPage4iiState extends State<OnboardingPage4ii>
 
                         // ANIMATED TEXT
                         Positioned(
-                          top: 190,
+                          top: 170,
                           left: MediaQuery.of(context).size.width * 0.5 + 16,
                           right: 16,
                           child: AnimatedSlide(
@@ -108,7 +108,6 @@ class _OnboardingPage4iiState extends State<OnboardingPage4ii>
                   ),
 
                   const SizedBox(height: 8),
-                  OnboardingPageIndicator(currentPage: 5, totalPages: 14),
                   const SizedBox(height: 10),
 
                   Padding(

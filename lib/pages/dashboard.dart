@@ -4,7 +4,8 @@ import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import '../services/quiz_service.dart';
 import 'quiz_page_1.dart';
-import 'audio_player_page.dart' show AudioPlayerPage, AudioContent, audioContent1, audioContent2, audioContent3, audioContent4, audioContent5, audioContent6, audioContent7;
+import 'quiz_completion_page.dart';
+import 'audio_player_page.dart' show AudioPlayerPage,  allAudioContent, AudioContent, audioContent1, audioContent2, audioContent3, audioContent4, audioContent5, audioContent6, audioContent7;
 
 void main() {
   runApp(const MyApp());
@@ -163,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     const SizedBox(height: 16),
                     _QuizCard(language: currentLanguage),
                     const SizedBox(height: 16),
-                    _buildTabBar(),
+                    _buildTabBar(currentLanguage),
                     const SizedBox(height: 16),
                     _buildTabContent(currentLanguage),
                     const SizedBox(height: 24),
@@ -177,7 +178,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(String language) {
+    final tabs = [
+      LanguageStrings.getTranslation(language, 'basics_tab'),
+      LanguageStrings.getTranslation(language, 'care_tab'),
+      LanguageStrings.getTranslation(language, 'support_tab'),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFFF4F4),
@@ -201,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         unselectedLabelStyle:
             const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
         dividerColor: Colors.transparent,
-        tabs: _tabs.map((t) => Tab(text: t)).toList(),
+        tabs: tabs.map((t) => Tab(text: t)).toList(),
       ),
     );
   }
@@ -246,6 +253,19 @@ class _LanguageDialogState extends State<_LanguageDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final dialogTitle = LanguageStrings.getTranslation(
+      context.read<LanguageBloc>().state is LanguageSelected
+          ? (context.read<LanguageBloc>().state as LanguageSelected).language
+          : 'English',
+      'choose_language',
+    );
+    final dialogSubtitle = LanguageStrings.getTranslation(
+      context.read<LanguageBloc>().state is LanguageSelected
+          ? (context.read<LanguageBloc>().state as LanguageSelected).language
+          : 'English',
+      'select_language_preference',
+    );
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 40),
@@ -267,17 +287,17 @@ class _LanguageDialogState extends State<_LanguageDialog> {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Choose Language',
-              style: TextStyle(
+            Text(
+              dialogTitle,
+              style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF333333)),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Select the language you prefer',
-              style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+            Text(
+              dialogSubtitle,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
             ),
             const SizedBox(height: 20),
             ..._languages.map((lang) {
@@ -380,6 +400,7 @@ class _WelcomeBannerState extends State<_WelcomeBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final greetingText = LanguageStrings.getTranslation(widget.language, 'good_morning');
     final careText =
         LanguageStrings.getTranslation(widget.language, 'breast_care')
             .replaceAll('[b]', '')
@@ -401,22 +422,21 @@ class _WelcomeBannerState extends State<_WelcomeBanner> {
       ),
       child: Row(
         children: [
-          // ── Left: text ─────────────────────────────────────────────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
+                  children: [
                     Text(
-                      'Good Morning, Bibi ',
-                      style: TextStyle(
+                      greetingText,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF333333),
                       ),
                     ),
-                    Text('👋', style: TextStyle(fontSize: 14)),
+                    const Text('👋', style: TextStyle(fontSize: 14)),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -430,8 +450,6 @@ class _WelcomeBannerState extends State<_WelcomeBanner> {
               ],
             ),
           ),
-
-          // ── Right: star + globe icons ───────────────────────────────
           Row(
             children: [
               GestureDetector(
@@ -495,6 +513,8 @@ class _QuizCardState extends State<_QuizCard> {
     final quizTitle = LanguageStrings.getTranslation(widget.language, 'self_examine_card_title');
     final quizDesc  = LanguageStrings.getTranslation(widget.language, 'self_examine_subtitle');
     final startBtn  = LanguageStrings.getTranslation(widget.language, 'get_started');
+    final completeText = LanguageStrings.getTranslation(widget.language, 'quiz_complete');
+    final questionsText = LanguageStrings.getTranslation(widget.language, 'questions_answered');
 
     final progressPercentage = _isLoading 
         ? 0 
@@ -503,13 +523,28 @@ class _QuizCardState extends State<_QuizCard> {
     final isCompleted = _quizProgress?.isCompleted ?? false;
     final buttonText = isCompleted ? startBtn : ((_quizProgress != null && _quizProgress!.questionsCompleted > 0) ? 'Resume' : startBtn);
 
-    return GestureDetector(
-      onTap: () {
+    void _navigateToQuiz() {
+      if (isCompleted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QuizCompletionPage(
+              quizId: 1,
+              completedQuestions: _quizProgress?.questionsCompleted ?? 0,
+              totalQuestions: _quizProgress?.totalQuestions ?? 6,
+            ),
+          ),
+        ).then((_) => _loadQuizProgress());
+      } else {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const QuizPage1()),
         ).then((_) => _loadQuizProgress());
-      },
+      }
+    }
+
+    return GestureDetector(
+      onTap: _navigateToQuiz,
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         decoration: BoxDecoration(
@@ -522,7 +557,6 @@ class _QuizCardState extends State<_QuizCard> {
         ),
         child: Row(
           children: [
-            // ── Timer icon ───────────────────────────────────────────────
             Container(
               width: 52,
               height: 52,
@@ -538,7 +572,6 @@ class _QuizCardState extends State<_QuizCard> {
 
             const SizedBox(width: 12),
 
-            // ── Text ─────────────────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,12 +606,12 @@ class _QuizCardState extends State<_QuizCard> {
                   const SizedBox(height: 2),
                   if (_quizProgress != null && !isCompleted)
                     Text(
-                      '${_quizProgress!.questionsCompleted}/${_quizProgress!.totalQuestions} questions answered',
+                      '${_quizProgress!.questionsCompleted}/${_quizProgress!.totalQuestions} $questionsText',
                       style: const TextStyle(fontSize: 11, color: Colors.white70),
                     )
                   else if (isCompleted)
                     Text(
-                      'Quiz completed! Retake to improve your score.',
+                      completeText,
                       style: const TextStyle(fontSize: 11, color: Colors.white70),
                     )
                   else
@@ -590,14 +623,8 @@ class _QuizCardState extends State<_QuizCard> {
               ),
             ),
 
-            // ── Start/Resume button ──────────────────────────────────────
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const QuizPage1()),
-                ).then((_) => _loadQuizProgress());
-              },
+              onPressed: _navigateToQuiz,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFFFF7198),
@@ -626,6 +653,7 @@ class _QuizCardState extends State<_QuizCard> {
     );
   }
 }
+
 // ────────────────────────────────────────────────────────────────────────────
 // Video Card Data Model
 // ────────────────────────────────────────────────────────────────────────────
@@ -762,6 +790,8 @@ class _VideoCardState extends State<_VideoCard> {
                             MaterialPageRoute(
                               builder: (context) => AudioPlayerPage(
                                 audioContent: widget.data.audioContent,
+                                  allContent: allAudioContent,
+
                               ),
                             ),
                           );

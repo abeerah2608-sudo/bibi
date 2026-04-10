@@ -4,7 +4,7 @@ import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import '../mixins/onboarding_audio_mixin.dart';
-import 'onboarding_page_4iii.dart';
+import 'onboarding_page_1.dart';
 import 'onboarding_page_6.dart';
 
 class OnboardingPage5 extends StatefulWidget {
@@ -77,56 +77,56 @@ super.initState();
                   ),
                   const SizedBox(height: 8),
 
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        // Cancer cell animation
-                        const OnboardingAnimation(
-                          assetPath:
-                              'assets/images/Cancer Cell Animation from Bibi Project (1).lottie',
-                          translateX: 0,
-                          translateY: -40,
-                          repeat: false,
-                        ),
+                 Expanded(
+  child: Column(
+    children: [
+      // ── ANIMATION (CENTERED) ──
+      Expanded(
+        child: Center(
+          child: const OnboardingAnimation(
+            assetPath:
+                'assets/images/Cancer Cell Animation from Bibi Project (1).lottie',
+            
+            // IMPORTANT: remove upward shift
+            repeat: false,
+            scale: 1.0,
+          ),
+        ),
+      ),
 
-                        Positioned(
-                          top: 80,
-                          left: 0,
-                          right: 0,
-                          child: AnimatedSlide(
-                            offset: _showText ? Offset.zero : const Offset(0, 0.15),
-                            duration: const Duration(milliseconds: 600),
-                            curve: Curves.easeOutCubic,
-                            child: AnimatedOpacity(
-                              opacity: _showText ? 1 : 0,
-                              duration: const Duration(milliseconds: 500),
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Directionality(
-                                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                                    child: Text(
-                                      title,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF8B5E3C),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+      // ── TEXT (BOTTOM) ──
+      AnimatedSlide(
+        offset: _showText ? Offset.zero : const Offset(0, 0.3),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: _showText ? 1 : 0,
+          duration: const Duration(milliseconds: 500),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Directionality(
+              textDirection:
+                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 32,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF8B5E3C),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
 
+      const SizedBox(height: 20), // spacing above buttons
+    ],
+  ),
+),
                   const SizedBox(height: 8),
-                  OnboardingPageIndicator(currentPage: 7, totalPages: 14),
                   const SizedBox(height: 10),
 
                   Padding(
@@ -136,7 +136,7 @@ super.initState();
                         stopAudio(); // ✅ stop audio before navigating
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => const OnboardingPage4iii(),
+                            builder: (context) => const OnboardingFlow(),
                           ),
                         );
                       },

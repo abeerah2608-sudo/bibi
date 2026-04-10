@@ -18,14 +18,31 @@ dependencies:
   just_audio: ^0.10.5
   shared_preferences: ^2.2.0
   flutter_native_splash: ^2.4.7
+  flutter_launcher_icons: ^0.14.4
+  permission_handler: ^12.0.1
+  audio_session: ^0.2.3
+  flutter_cache_manager: ^3.4.1
+  sqflite: ^2.4.2
+  audio_service: ^0.18.18
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/Bibi_Logo_Vector 1.png"
+  adaptive_icon_background: '#FFF4F4'
+  adaptive_icon_foreground: "assets/images/Bibi_Logo_Vector 1.png"
+
+flutter_native_splash:
+  color: "#FFF4F4"
+  image: assets/images/Bibi_Logo_Vector 1.png
+
 flutter:
-  uses-material-design: true  
+  uses-material-design: true
   assets:
     - assets/images/
     - assets/audio/
@@ -36,17 +53,13 @@ flutter:
           weight: 600
         - asset: assets/fonts/DMSans_18pt-SemiBold.ttf
           weight: 700
-    - family: Edu 
+    - family: Edu
       fonts:
         - asset: assets/fonts/EduAUVICWANTHand-SemiBold.ttf
           weight: 400
         - asset: assets/fonts/EduAUVICWANTHand-Bold.ttf
           weight: 900
-    - family: Inter 
+    - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf
           weight: 700
-
-flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/images/Bibi_Logo_Vector 1.png
