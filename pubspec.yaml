@@ -16,6 +16,8 @@ dependencies:
   dotlottie_loader: ^0.0.5
   url_launcher: ^6.2.0
   just_audio: ^0.10.5
+  shared_preferences: ^2.2.0
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -44,4 +46,7 @@ flutter:
       fonts:
         - asset: assets/fonts/Inter.ttf
           weight: 700
-           
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/Bibi_Logo_Vector 1.png

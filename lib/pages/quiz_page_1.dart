@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
+import '../services/quiz_service.dart';
 import '../widgets/quiz_yes_no_button.dart';
+import 'quiz_completion_page.dart';
 
 class QuizPage1 extends StatefulWidget {
   const QuizPage1({super.key});
@@ -15,10 +17,18 @@ class QuizPage1 extends StatefulWidget {
 class _QuizPage1State extends State<QuizPage1> {
   int _currentQuestion = 0;
   String? _selectedAnswer;
+  late List<QuizQuestion> _questions;
+  late List<String?> _allAnswers;
+  static const int _quizId = 1;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadQuizProgress();
+  }
+
+  Future<void> _loadQuizProgress() async {
     _questions = [
       QuizQuestion(number: 1, textKey: 'quiz_q1'),
       QuizQuestion(number: 2, textKey: 'quiz_q2'),
@@ -27,11 +37,30 @@ class _QuizPage1State extends State<QuizPage1> {
       QuizQuestion(number: 5, textKey: 'quiz_q5'),
       QuizQuestion(number: 6, textKey: 'quiz_q6'),
     ];
+
+    // Initialize quiz progress if not exists
+    await QuizService.initializeQuizProgress(_quizId, _questions.length);
+
+    // Load saved progress
+    final progress = await QuizService.getQuizProgress(_quizId);
+    if (progress != null && mounted) {
+      setState(() {
+        _currentQuestion = progress.currentQuestion;
+        _allAnswers = progress.answers;
+        _selectedAnswer = _allAnswers[_currentQuestion];
+        _isLoading = false;
+      });
+    } else {
+      if (mounted) {
+        setState(() {
+          _allAnswers = List<String?>.filled(_questions.length, null);
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  late List<QuizQuestion> _questions;
-
-  void _nextQuestion() {
+  void _nextQuestion() async {
     if (_selectedAnswer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -42,20 +71,55 @@ class _QuizPage1State extends State<QuizPage1> {
       );
       return;
     }
+
+    // Save current answer
+    _allAnswers[_currentQuestion] = _selectedAnswer;
+    await QuizService.saveAnswer(_quizId, _currentQuestion, _selectedAnswer!);
+
     if (_currentQuestion < _questions.length - 1) {
-      setState(() {
-        _currentQuestion++;
-        _selectedAnswer = null;
-      });
+      // Move to next question
+      await QuizService.updateCurrentQuestion(_quizId, _currentQuestion + 1);
+      if (mounted) {
+        setState(() {
+          _currentQuestion++;
+          _selectedAnswer = _allAnswers[_currentQuestion];
+        });
+      }
+    } else {
+      // Quiz completed
+      await QuizService.completeQuiz(_quizId);
+      final completedCount = _allAnswers.where((a) => a != null).length;
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QuizCompletionPage(
+              quizId: _quizId,
+              completedQuestions: completedCount,
+              totalQuestions: _questions.length,
+            ),
+          ),
+        );
+      }
     }
   }
 
-  void _previousQuestion() {
+  void _previousQuestion() async {
     if (_currentQuestion > 0) {
-      setState(() {
-        _currentQuestion--;
-        _selectedAnswer = null;
-      });
+      // Save current answer before going back
+      if (_selectedAnswer != null) {
+        _allAnswers[_currentQuestion] = _selectedAnswer;
+        await QuizService.saveAnswer(_quizId, _currentQuestion, _selectedAnswer!);
+      }
+
+      await QuizService.updateCurrentQuestion(_quizId, _currentQuestion - 1);
+      if (mounted) {
+        setState(() {
+          _currentQuestion--;
+          _selectedAnswer = _allAnswers[_currentQuestion];
+        });
+      }
     }
   }
 
@@ -66,6 +130,19 @@ class _QuizPage1State extends State<QuizPage1> {
         String currentLanguage = 'English';
         if (state is LanguageSelected) {
           currentLanguage = state.language;
+        }
+
+        if (_isLoading) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFFCEEF3),
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  const Color(0xFFE86A8D),
+                ),
+              ),
+            ),
+          );
         }
 
         return Scaffold(

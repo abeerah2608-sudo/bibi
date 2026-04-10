@@ -7,6 +7,7 @@ import '../widgets/cached_logo_image.dart';
 import '../utils/text_parsing_utils.dart';
 import 'onboarding_page_2.dart';
 import 'onboarding_page_4.dart';
+import '../mixins/onboarding_audio_mixin.dart'; 
 
 class OnboardingPage3 extends StatefulWidget {
   const OnboardingPage3({super.key});
@@ -15,17 +16,37 @@ class OnboardingPage3 extends StatefulWidget {
   State<OnboardingPage3> createState() => _OnboardingPage3State();
 }
 
-class _OnboardingPage3State extends State<OnboardingPage3> {
+class _OnboardingPage3State extends State<OnboardingPage3>
+    with OnboardingAudioMixin<OnboardingPage3> {
   bool _showText = false;
+
+  /// ✅ Provide audio paths for this page
+  @override
+  String get englishAudioPath => 'assets/audio/onboarding_3.mp3';
+  @override
+  String get urduAudioPath => 'assets/audio/onboarding_3_urdu.mp3';
 
   @override
   void initState() {
-    super.initState();
+ super.initState();
+    final state = context.read<LanguageBloc>().state;
+    String initialLanguage = 'English';
+    if (state is LanguageSelected) {
+      initialLanguage = state.language;
+    }
+
+    // Initialize audio with the correct language
+    initAudio(initialLanguage);  // ✅ initialize audio
+
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        setState(() => _showText = true);
-      }
+      if (mounted) setState(() => _showText = true);
     });
+  }
+
+  @override
+  void dispose() {
+    disposeAudio(); // ✅ dispose audio
+    super.dispose();
   }
 
   @override
@@ -35,58 +56,61 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
         String currentLanguage = 'English';
         if (state is LanguageSelected) {
           currentLanguage = state.language;
+          onLanguageChanged(currentLanguage); // ✅ handle language change
         }
 
-        final title = LanguageStrings.getTranslation(currentLanguage, 'breast_cancer');
+        final title =
+            LanguageStrings.getTranslation(currentLanguage, 'breast_cancer');
+        final isUrdu = currentLanguage == 'اردو';
 
         return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: const Color(0xFFFFF4F4),
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-            const CachedLogoImage(height: 100, width: 100),
-
-            Expanded(
-              child: Stack(
+          body: SafeArea(
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: const Color(0xFFFFF4F4),
+              child: Column(
                 children: [
-                  const OnboardingAnimation(
-                    assetPath: 'assets/images/Bibi_Onboarding_Leftt.lottie',
-                  ),
-
-                  Positioned(
-                    top: 175,
-                    left: MediaQuery.of(context).size.width * 0.5 + 16,
-                    right: 8,
-                    child: AnimatedSlide(
-                      offset: _showText ? Offset.zero : const Offset(0, 0.15),
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOutCubic,
-                      child: AnimatedOpacity(
-                        opacity: _showText ? 1 : 0,
-                        duration: const Duration(milliseconds: 500),
-                        child: TextParsingUtils.parseBold(title),
-                      ),
+                  const SizedBox(height: 12),
+                  const CachedLogoImage(height: 72, width: 72),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        const OnboardingAnimation(
+                          assetPath:
+                              'assets/images/Bibi_Onboarding_Leftt.lottie',
+                        ),
+                        Positioned(
+                          top: 190,
+                          left: MediaQuery.of(context).size.width * 0.5 + 16,
+                          right: 16,
+                          child: AnimatedSlide(
+                            offset: _showText ? Offset.zero : const Offset(0, 0.15),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeOutCubic,
+                            child: AnimatedOpacity(
+                              opacity: _showText ? 1 : 0,
+                              duration: const Duration(milliseconds: 500),
+                              child: Directionality(
+                                textDirection:
+                                    isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                                child: TextParsingUtils.parseBold(title),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  // Page indicator
-                  Positioned(
-                    bottom: 50,
-                    left: 0,
-                    right: 0,
-                    child: OnboardingPageIndicator(currentPage: 2, totalPages: 10),
-                  ),
-
-                  // Navigation buttons
-                  Positioned(
-                    bottom: 24,
-                    left: 0,
-                    right: 0,
+                  const SizedBox(height: 8),
+                  OnboardingPageIndicator(currentPage: 2, totalPages: 14),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: OnboardingNavigationButtons(
                       onBackPressed: () {
+                        stopAudio();
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                             builder: (context) => const OnboardingPage2(),
@@ -94,6 +118,7 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
                         );
                       },
                       onNextPressed: () {
+                        stopAudio();
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                             builder: (context) => const OnboardingPage4(),
@@ -102,13 +127,12 @@ class _OnboardingPage3State extends State<OnboardingPage3> {
                       },
                     ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
     );
   }

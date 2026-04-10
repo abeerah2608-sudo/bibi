@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import '../widgets/cached_logo_image.dart';
+import 'package:lottie/lottie.dart';
+import 'package:dotlottie_loader/dotlottie_loader.dart';
 import 'languageSelection.dart';
+import 'dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final bool hasCompletedOnboarding;
+  
+  const SplashScreen({super.key, required this.hasCompletedOnboarding});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -21,7 +25,11 @@ class _SplashScreenState extends State<SplashScreen> {
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LanguageSelectionPage()),
+        MaterialPageRoute(
+          builder: (context) => widget.hasCompletedOnboarding
+              ? const DashboardScreen()
+              : const LanguageSelectionPage(),
+        ),
       );
     }
   }
@@ -29,10 +37,38 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: const Color(0xFFFFF5F5),
-        child: const Center(
-          child: CachedLogoImage(height: 200, width: 200),
+      backgroundColor: Colors.white,
+      body: RepaintBoundary(
+        child: DotLottieLoader.fromAsset(
+          'assets/images/splash.lottie',
+          frameBuilder: (context, dotLottie) {
+            if (dotLottie == null) {
+              return const SizedBox.shrink(); // silent wait, no spinner on splash
+            }
+
+            if (dotLottie.animations.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return Lottie.memory(
+              dotLottie.animations.values.first,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,        // fills entire screen
+              alignment: Alignment.center,
+              repeat: true,
+              animate: true,
+              imageProviderFactory: (asset) {
+                if (dotLottie.images.containsKey(asset.fileName)) {
+                  return MemoryImage(dotLottie.images[asset.fileName]!);
+                }
+                return null;
+              },
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return const SizedBox.shrink();
+          },
         ),
       ),
     );

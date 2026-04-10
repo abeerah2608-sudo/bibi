@@ -6,6 +6,7 @@ import '../widgets/onboarding_widgets_exports.dart';
 import '../widgets/cached_logo_image.dart';
 import '../utils/text_parsing_utils.dart';
 import 'onboarding_page_2.dart';
+import '../mixins/onboarding_audio_mixin.dart'; // ✅ import mixin
 
 class OnboardingPage1 extends StatefulWidget {
   const OnboardingPage1({super.key});
@@ -14,17 +15,36 @@ class OnboardingPage1 extends StatefulWidget {
   State<OnboardingPage1> createState() => _OnboardingPage1State();
 }
 
-class _OnboardingPage1State extends State<OnboardingPage1> {
+class _OnboardingPage1State extends State<OnboardingPage1>
+    with OnboardingAudioMixin {
   bool _showText = false;
+
+  /// ✅ Provide audio paths for this page
+  @override
+  String get englishAudioPath => 'assets/audio/onboarding_1.mp3';
+  @override
+  String get urduAudioPath => 'assets/audio/onboarding_1_urdu.mp3';
 
   @override
   void initState() {
     super.initState();
+    final state = context.read<LanguageBloc>().state;
+    String initialLanguage = 'English';
+    if (state is LanguageSelected) {
+      initialLanguage = state.language;
+    }
+
+    // Initialize audio with the correct language
+    initAudio(initialLanguage); // ✅ initialize audio
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        setState(() => _showText = true);
-      }
+      if (mounted) setState(() => _showText = true);
     });
+  }
+
+  @override
+  void dispose() {
+    disposeAudio(); // ✅ dispose audio
+    super.dispose();
   }
 
   @override
@@ -34,20 +54,25 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         String currentLanguage = 'English';
         if (state is LanguageSelected) {
           currentLanguage = state.language;
+          onLanguageChanged(currentLanguage); // ✅ handle language change
         }
 
-        final title = LanguageStrings.getTranslation(currentLanguage, 'assalam_o_alaikum');
+        final title =
+            LanguageStrings.getTranslation(currentLanguage, 'assalam_o_alaikum');
+        final isUrdu = currentLanguage == 'اردو';
 
         return Scaffold(
-          body: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: const Color(0xFFFFF4F4),
-            child: Column(
+          body: SafeArea(
+             child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: const Color(0xFFFFF4F4),
+              child: Column(
+            
               children: [
-                const SizedBox(height: 60),
-                const CachedLogoImage(height: 100, width: 100),
-
+                const SizedBox(height: 12),
+                const CachedLogoImage(height: 72, width: 72),
+                const SizedBox(height: 8),
                 Expanded(
                   child: Stack(
                     children: [
@@ -65,40 +90,40 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                           child: AnimatedOpacity(
                             opacity: _showText ? 1 : 0,
                             duration: const Duration(milliseconds: 500),
-                            child: TextParsingUtils.parseBold(title),
+                            child: Directionality(
+                              textDirection:
+                                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                              child: TextParsingUtils.parseBold(title),
+                            ),
                           ),
-                        ),
-                      ),
-                      // Page indicator
-                      Positioned(
-                        bottom: 50,
-                        left: 0,
-                        right: 0,
-                        child: OnboardingPageIndicator(currentPage: 0, totalPages: 10),
-                      ),
-                      // Navigation buttons
-                      Positioned(
-                        bottom: 24,
-                        left: 0,
-                        right: 0,
-                        child: OnboardingNavigationButtons(
-                          showBackButton: false,
-                          onNextPressed: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (context) => const OnboardingPage2(),
-                              ),
-                            );
-                          },
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 8),
+                OnboardingPageIndicator(currentPage: 0, totalPages: 14),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: OnboardingNavigationButtons(
+                    showBackButton: false,
+                    onNextPressed: () {
+                      stopAudio(); // ✅ stop audio before navigating
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const OnboardingPage2(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
-      );
+          ),
+        );
       },
     );
   }

@@ -5,6 +5,7 @@ import '../widgets/onboarding_widgets_exports.dart';
 import '../services/language_strings.dart';
 import 'onboarding_page_8.dart';
 import 'onboarding_page_10.dart';
+import '../mixins/onboarding_audio_mixin.dart';
 
 // ── Data model ────────────────────────────────────────────────────────────────
 class _FoodItem {
@@ -18,8 +19,6 @@ class _FoodItem {
     required this.labelFallback,
   });
 }
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 class OnboardingPage9 extends StatefulWidget {
   const OnboardingPage9({super.key});
 
@@ -27,8 +26,17 @@ class OnboardingPage9 extends StatefulWidget {
   State<OnboardingPage9> createState() => _OnboardingPage9State();
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 class _OnboardingPage9State extends State<OnboardingPage9>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, OnboardingAudioMixin{
+
+  // ── Implement required getters for the mixin ──
+  @override
+  String get englishAudioPath => 'assets/audio/onboarding_11.mp3';
+
+  @override
+  String get urduAudioPath => 'assets/audio/onboarding_11_urdu.mp3';
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -71,6 +79,9 @@ class _OnboardingPage9State extends State<OnboardingPage9>
   void initState() {
     super.initState();
 
+    // Initialize audio from mixin
+    initAudio();
+
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -103,6 +114,10 @@ class _OnboardingPage9State extends State<OnboardingPage9>
     for (final c in _itemControllers) {
       c.dispose();
     }
+
+    // Dispose audio from mixin
+    disposeAudio();
+
     super.dispose();
   }
 
@@ -114,7 +129,8 @@ class _OnboardingPage9State extends State<OnboardingPage9>
     return item.labelFallback;
   }
 
-  Widget _buildItem(int index, String currentLanguage, {double circleDiameter = 104}) {
+  Widget _buildItem(int index, String currentLanguage,
+      {double circleDiameter = 104}) {
     final item = _items[index];
     final anim = _itemAnimations[index];
 
@@ -170,108 +186,119 @@ class _OnboardingPage9State extends State<OnboardingPage9>
         String currentLanguage = 'English';
         if (state is LanguageSelected) {
           currentLanguage = state.language;
+          onLanguageChanged(currentLanguage); // from mixin
         }
 
-        final howToPrevent =
-            LanguageStrings.getTranslation(currentLanguage, 'how_to_prevent_title');
+        final howToPrevent = LanguageStrings.getTranslation(
+            currentLanguage, 'how_to_prevent_title');
 
         return Scaffold(
-      body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: const Color(0xFFFFF4F4),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
+          body: SafeArea(
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: const Color(0xFFFFF4F4),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
 
-              Image.asset(
-                'assets/images/Bibi_Logo_Vector 1.png',
-                height: 72,
-                width: 72,
-              ),
+                  Image.asset(
+                    'assets/images/Bibi_Logo_Vector 1.png',
+                    height: 72,
+                    width: 72,
+                  ),
 
-              const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-              Expanded(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Column(
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Center(child: _buildItem(0, currentLanguage, circleDiameter: 112)),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [_buildItem(1, currentLanguage), _buildItem(2, currentLanguage)],
+                            Column(
+                              children: [
+                                Center(
+                                    child: _buildItem(0, currentLanguage,
+                                        circleDiameter: 112)),
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildItem(1, currentLanguage),
+                                    _buildItem(2, currentLanguage)
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildItem(3, currentLanguage),
+                                    _buildItem(4, currentLanguage)
+                                  ],
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [_buildItem(3, currentLanguage), _buildItem(4, currentLanguage)],
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Text(
+                                howToPrevent,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF8B5E3C),
+                                  height: 1.2,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            howToPrevent,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF8B5E3C),
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 8),
+
+                  OnboardingPageIndicator(currentPage: 11, totalPages: 14),
+
+                  const SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: OnboardingNavigationButtons(
+                      onBackPressed: () {
+                         stopAudio(); 
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const OnboardingPage8(),
+                          ),
+                        );
+                      },
+                      onNextPressed: () {
+                         stopAudio(); 
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const OnboardingPage10(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+                ],
               ),
-
-              const SizedBox(height: 8),
-
-              OnboardingPageIndicator(currentPage: 8, totalPages: 10),
-
-              const SizedBox(height: 10),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: OnboardingNavigationButtons(
-                  // Back button goes to page 8
-                  onBackPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const OnboardingPage8(),
-                      ),
-                    );
-                  },
-                  // Next button goes to page 10
-                  onNextPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const OnboardingPage10(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
       },
     );
   }

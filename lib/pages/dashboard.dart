@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
+import '../services/quiz_service.dart';
 import 'quiz_page_1.dart';
 import 'audio_player_page.dart' show AudioPlayerPage, AudioContent, audioContent1, audioContent2, audioContent3, audioContent4, audioContent5, audioContent6, audioContent7;
 
@@ -45,19 +46,19 @@ class _DashboardScreenState extends State<DashboardScreen>
       VideoCardData(
         title: 'What is Breast Cancer?',
         subtitle: 'Understanding the basics in 5 min',
-        duration: '3:24',
+        duration: '0:21',
         imagePlaceholder: 'whatIsIt.png',
         titleKey: 'cancer_cell',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'what_subtitle',
         audioContent: audioContent1,
       ),
       VideoCardData(
-        title: 'Are you at Risk?',
+        title: 'Are you at risk?',
         subtitle: 'When an abnormality is found',
-        duration: '3:24',
+        duration: '0:16',
         imagePlaceholder: 'risk.png',
         titleKey: 'family_tree',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'risk_subtitle',
         audioContent: audioContent2,
       ),
     ],
@@ -65,29 +66,29 @@ class _DashboardScreenState extends State<DashboardScreen>
       VideoCardData(
         title: 'Preventive Screening',
         subtitle: 'Understanding concepts of preventive screening',
-        duration: '3:24',
+        duration: '0:25',
         imagePlaceholder: 'mammogram.jpg',
         accentColor: Color(0xFFE91E8C),
         titleKey: 'self_examine_card_title',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'screening_subtitle',
         audioContent: audioContent3,
       ),
       VideoCardData(
         title: 'How to Treat?',
         subtitle: 'Care options after detection',
-        duration: '5:24',
+        duration: '0:24',
         imagePlaceholder: 'treat.jpg',
         titleKey: 'how_to_treat_title',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'treat_subtitle',
         audioContent: audioContent4,
       ),
       VideoCardData(
         title: 'How to Confirm?',
         subtitle: 'Tests and checks to know for sure',
-        duration: '3:24',
+        duration: '0:19',
         imagePlaceholder: 'check.jpg',
         titleKey: 'self_examine_title',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'check_subtitle',
         audioContent: audioContent5,
       ),
     ],
@@ -95,19 +96,19 @@ class _DashboardScreenState extends State<DashboardScreen>
       VideoCardData(
         title: 'How to Prevent?',
         subtitle: 'Simple steps to lower the risk',
-        duration: '5:24',
+        duration: '0:17',
         imagePlaceholder: 'prevent.jpg',
         titleKey: 'how_to_prevent_title',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'prevent_subtitle',
         audioContent: audioContent6,
       ),
       VideoCardData(
         title: 'How to Support?',
         subtitle: 'Ways to help with care and comfort',
-        duration: '3:24',
+        duration: '0:22',
         imagePlaceholder: 'support.jpg',
         titleKey: 'how_to_support_title',
-        subtitleKey: 'self_examine_subtitle',
+        subtitleKey: 'support_subtitle',
         audioContent: audioContent7,
       ),
     ],
@@ -364,16 +365,23 @@ class _LanguageDialogState extends State<_LanguageDialog> {
 // ────────────────────────────────────────────────────────────────────────────
 // Welcome Banner
 // ────────────────────────────────────────────────────────────────────────────
-class _WelcomeBanner extends StatelessWidget {
+class _WelcomeBanner extends StatefulWidget {
   final String language;
   final VoidCallback onLanguageTap;
   const _WelcomeBanner(
       {required this.language, required this.onLanguageTap});
 
   @override
+  State<_WelcomeBanner> createState() => _WelcomeBannerState();
+}
+
+class _WelcomeBannerState extends State<_WelcomeBanner> {
+  bool _isFavorite = false;
+
+  @override
   Widget build(BuildContext context) {
     final careText =
-        LanguageStrings.getTranslation(language, 'breast_care')
+        LanguageStrings.getTranslation(widget.language, 'breast_care')
             .replaceAll('[b]', '')
             .replaceAll('[/b]', '');
 
@@ -426,11 +434,19 @@ class _WelcomeBanner extends StatelessWidget {
           // ── Right: star + globe icons ───────────────────────────────
           Row(
             children: [
-              const Icon(Icons.star_border,
-                  color: Color(0xFF888888), size: 22),
+              GestureDetector(
+                onTap: () {
+                  setState(() => _isFavorite = !_isFavorite);
+                },
+                child: Icon(
+                  _isFavorite ? Icons.star : Icons.star_border,
+                  color: _isFavorite ? const Color(0xFFF68AA8) : const Color(0xFF888888),
+                  size: 22,
+                ),
+              ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: onLanguageTap,
+                onTap: widget.onLanguageTap,
                 child: const Icon(Icons.language,
                     color: Color(0xFF888888), size: 22),
               ),
@@ -445,116 +461,167 @@ class _WelcomeBanner extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 // Quiz Card
 // ────────────────────────────────────────────────────────────────────────────
-class _QuizCard extends StatelessWidget {
+class _QuizCard extends StatefulWidget {
   final String language;
   const _QuizCard({required this.language});
 
   @override
+  State<_QuizCard> createState() => _QuizCardState();
+}
+
+class _QuizCardState extends State<_QuizCard> {
+  QuizProgress? _quizProgress;
+  bool _isLoading = true;
+  static const int _quizId = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuizProgress();
+  }
+
+  Future<void> _loadQuizProgress() async {
+    final progress = await QuizService.getQuizProgress(_quizId);
+    if (mounted) {
+      setState(() {
+        _quizProgress = progress;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final quizTitle = LanguageStrings.getTranslation(language, 'self_examine_card_title');
-    final quizDesc  = LanguageStrings.getTranslation(language, 'self_examine_subtitle');
-    final startBtn  = LanguageStrings.getTranslation(language, 'get_started');
+    final quizTitle = LanguageStrings.getTranslation(widget.language, 'self_examine_card_title');
+    final quizDesc  = LanguageStrings.getTranslation(widget.language, 'self_examine_subtitle');
+    final startBtn  = LanguageStrings.getTranslation(widget.language, 'get_started');
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const RadialGradient(
-          center: Alignment.center,
-          radius: 1.2,
-          colors: [Color(0xFFFFBACB), Color(0xFFFF7198)],
+    final progressPercentage = _isLoading 
+        ? 0 
+        : (_quizProgress?.progressPercentage.toStringAsFixed(0) ?? '0');
+
+    final isCompleted = _quizProgress?.isCompleted ?? false;
+    final buttonText = isCompleted ? startBtn : ((_quizProgress != null && _quizProgress!.questionsCompleted > 0) ? 'Resume' : startBtn);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const QuizPage1()),
+        ).then((_) => _loadQuizProgress());
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const RadialGradient(
+            center: Alignment.center,
+            radius: 1.2,
+            colors: [Color(0xFFFFBACB), Color(0xFFFF7198)],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // ── Timer icon ───────────────────────────────────────────────
-          Container(
-            width: 52,
-            height: 52,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white24,
+        child: Row(
+          children: [
+            // ── Timer icon ───────────────────────────────────────────────
+            Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white24,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Image.asset('assets/images/timer.png', fit: BoxFit.contain),
+              ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Image.asset('assets/images/timer.png', fit: BoxFit.contain),
-            ),
-          ),
 
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // ── Text ─────────────────────────────────────────────────────
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  quizTitle,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Colors.white,
+            // ── Text ─────────────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    quizTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                RichText(
-                  text: const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '0% ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.white,
+                  const SizedBox(height: 2),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$progressPercentage% ',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'complete',
-                        style: TextStyle(fontSize: 12, color: Colors.white70),
-                      ),
-                    ],
+                        TextSpan(
+                          text: 'complete',
+                          style: const TextStyle(fontSize: 12, color: Colors.white70),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  quizDesc,
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  if (_quizProgress != null && !isCompleted)
+                    Text(
+                      '${_quizProgress!.questionsCompleted}/${_quizProgress!.totalQuestions} questions answered',
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    )
+                  else if (isCompleted)
+                    Text(
+                      'Quiz completed! Retake to improve your score.',
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    )
+                  else
+                    Text(
+                      quizDesc,
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    ),
+                ],
+              ),
             ),
-          ),
 
-          // ── Start button ─────────────────────────────────────────────
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const QuizPage1()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFFF7198),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+            // ── Start/Resume button ──────────────────────────────────────
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const QuizPage1()),
+                ).then((_) => _loadQuizProgress());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFFFF7198),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                elevation: 0,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              textStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(buttonText),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward, size: 14),
+                ],
               ),
-              elevation: 0,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(startBtn),
-                const SizedBox(width: 4),
-                const Icon(Icons.arrow_forward, size: 14),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -587,25 +654,32 @@ class VideoCardData {
 // ────────────────────────────────────────────────────────────────────────────
 // Video Card Widget
 // ────────────────────────────────────────────────────────────────────────────
-class _VideoCard extends StatelessWidget {
+class _VideoCard extends StatefulWidget {
   final VideoCardData data;
   final String language;
   const _VideoCard({required this.data, required this.language});
 
   @override
+  State<_VideoCard> createState() => _VideoCardState();
+}
+
+class _VideoCardState extends State<_VideoCard> {
+  bool _isFavorite = false;
+
+  @override
   Widget build(BuildContext context) {
-    final title = data.titleKey != null
-        ? LanguageStrings.getTranslation(language, data.titleKey!)
+    final title = widget.data.titleKey != null
+        ? LanguageStrings.getTranslation(widget.language, widget.data.titleKey!)
             .replaceAll('[b]', '')
             .replaceAll('[/b]', '')
-        : data.title;
+        : widget.data.title;
 
-    final subtitle = data.subtitleKey != null
-        ? LanguageStrings.getTranslation(language, data.subtitleKey!)
-        : data.subtitle;
+    final subtitle = widget.data.subtitleKey != null
+        ? LanguageStrings.getTranslation(widget.language, widget.data.subtitleKey!)
+        : widget.data.subtitle;
 
     final watchNow =
-        LanguageStrings.getTranslation(language, 'watch_now');
+        LanguageStrings.getTranslation(widget.language, 'watch_now');
 
     return Container(
       decoration: BoxDecoration(
@@ -628,7 +702,7 @@ class _VideoCard extends StatelessWidget {
             child: Stack(
               children: [
                 Image.asset(
-                  'assets/images/${data.imagePlaceholder}',
+                  'assets/images/${widget.data.imagePlaceholder}',
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -649,7 +723,7 @@ class _VideoCard extends StatelessWidget {
                         const Icon(Icons.play_circle_fill,
                             color: Colors.white, size: 12),
                         const SizedBox(width: 3),
-                        Text(data.duration,
+                        Text(widget.data.duration,
                             style: const TextStyle(
                                 color: Colors.white, fontSize: 11)),
                       ],
@@ -687,7 +761,7 @@ class _VideoCard extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => AudioPlayerPage(
-                                audioContent: data.audioContent,
+                                audioContent: widget.data.audioContent,
                               ),
                             ),
                           );
@@ -720,9 +794,14 @@ class _VideoCard extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {},
-                  child: const Icon(Icons.favorite_border,
-                      size: 22, color: Color(0xFF8B5E3C)),
+                  onTap: () {
+                    setState(() => _isFavorite = !_isFavorite);
+                  },
+                  child: Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                    size: 22,
+                    color: _isFavorite ? const Color(0xFFF68AA8) : const Color(0xFF8B5E3C),
+                  ),
                 ),
               ],
             ),

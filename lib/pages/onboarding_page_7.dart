@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/bloc_exports.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:just_audio/just_audio.dart'; // ✅ ADDED
 import '../services/language_strings.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 import 'onboarding_page_6.dart';
 import 'onboarding_page_8.dart';
+
+// ✅ ADDED audio paths
+const String _englishAudio = 'assets/audio/onboarding_10.mp3';
+const String _urduAudio = 'assets/audio/onboarding_10_urdu.mp3';
 
 class OnboardingPage7 extends StatefulWidget {
   const OnboardingPage7({super.key});
@@ -17,26 +22,72 @@ class OnboardingPage7 extends StatefulWidget {
 class _OnboardingPage7State extends State<OnboardingPage7> {
   bool _showText = false;
   bool _isFavourite = false;
-  bool _showContinue = false; // shown after Watch Now is tapped
+  bool _showContinue = false;
 
   static const String _videoUrl =
       'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
   static const String _videoDuration = '3:33';
 
+  // ✅ ADDED audio variables
+  late AudioPlayer _audioPlayer;
+  String _currentLanguage = 'English';
+  String _loadedAudioPath = '';
+
+  String get _currentAudioPath {
+    return _currentLanguage == 'Urdu' ? _urduAudio : _englishAudio;
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // ✅ INIT AUDIO
+    _audioPlayer = AudioPlayer();
+    _loadedAudioPath = _englishAudio;
+    _loadAudio(_loadedAudioPath);
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => _showText = true);
     });
   }
 
+  // ✅ ADDED
+  void _loadAudio(String path) {
+    _audioPlayer.setAsset(path).then((_) {
+      _audioPlayer.play(); // auto play
+      _loadedAudioPath = path;
+    }).catchError((e) {
+      debugPrint('Audio load error: $e');
+    });
+  }
+
+  // ✅ ADDED
+  void _onLanguageChanged(String newLanguage) {
+    if (newLanguage == _currentLanguage) return;
+
+    _currentLanguage = newLanguage;
+    final newPath = _currentAudioPath;
+
+    if (newPath != _loadedAudioPath) {
+      final wasPlaying = _audioPlayer.playing;
+
+      _audioPlayer.stop();
+      _loadAudio(newPath);
+
+      if (wasPlaying) {
+        _audioPlayer.play();
+      }
+    }
+  }
+
   Future<void> _launchVideo() async {
     final uri = Uri.parse(_videoUrl);
+
+    _audioPlayer.stop(); // ✅ ADDED (stop audio before video)
+
     try {
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (launched && mounted) {
-        // Show the Continue button as soon as video opens
         setState(() => _showContinue = true);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,11 +105,19 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
   }
 
   void _navigateNext(String currentLanguage) {
+    _audioPlayer.stop(); // ✅ ADDED
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => const OnboardingPage8(),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose(); // ✅ ADDED
+    super.dispose();
   }
 
   @override
@@ -68,6 +127,7 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
         String currentLanguage = 'English';
         if (state is LanguageSelected) {
           currentLanguage = state.language;
+          _onLanguageChanged(currentLanguage); // ✅ ADDED
         }
 
         final cardTitle = LanguageStrings.getTranslation(
@@ -105,7 +165,7 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
 
                   const SizedBox(height: 14),
 
-                  // ── Card ──────────────────────────────────────────────
+                  // ── Card (UNCHANGED) ──
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
@@ -124,7 +184,6 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
                         borderRadius: BorderRadius.circular(28),
                         child: Column(
                           children: [
-                            // Pink image
                             Container(
                               width: double.infinity,
                               height: imageHeight,
@@ -172,7 +231,6 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
                                 ],
                               ),
                             ),
-
                             // Info section
                             Container(
                               width: double.infinity,
@@ -374,7 +432,7 @@ class _OnboardingPage7State extends State<OnboardingPage7> {
 
                   const SizedBox(height: 12),
 
-                  OnboardingPageIndicator(currentPage: 6, totalPages: 10),
+                  OnboardingPageIndicator(currentPage: 9, totalPages: 14),
 
                   const SizedBox(height: 10),
 
