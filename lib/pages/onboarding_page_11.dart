@@ -237,9 +237,16 @@ class _OnboardingPage11State extends State<OnboardingPage11>
       if (page.animationPath.isNotEmpty) {
         assets.add(page.animationPath);
       }
-      for (final asset in assets) {
-        await RemoteAssetService.resolveDownloadUrl(asset).timeout(const Duration(seconds: 10));
+
+      if (assets.isEmpty) {
+        return;
       }
+
+      final resolvedAssets = await Future.wait(
+        assets.map((asset) => RemoteAssetService.resolveDownloadUrl(asset)),
+      ).timeout(const Duration(seconds: 10));
+
+      await RemoteAssetService().preloadAssets(resolvedAssets);
     } catch (e) {
       debugPrint('⚠️ Page11 asset priming failed: $e');
     }
@@ -452,6 +459,7 @@ final gradientHeightPercent = _asDouble(gradient['height'], 0.2); // ✅ Get per
                         onNextPressed: hasNext
                             ? () async {
                                 stopAudio();
+                                await disposeAudio();
                                 if (nextAction == 'complete_onboarding' || nextDestination == 'dashboard') {
                                   await OnboardingService.markOnboardingCompleted();
                                   Navigator.of(context).push(

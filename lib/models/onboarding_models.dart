@@ -30,8 +30,15 @@ class AnimationConfig extends Equatable {
   });
 
   factory AnimationConfig.fromJson(Map<String, dynamic> json) {
+    double parseScale(dynamic v) {
+      if (v == null) return 1.0;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v.trim()) ?? 1.0;
+      return 1.0;
+    }
+
     return AnimationConfig(
-      scale: (json['scale'] as num?)?.toDouble() ?? 1.0,
+      scale: parseScale(json['scale']),
       translateXPercent: (json['translateXPercent'] as num?)?.toDouble() ?? 0.0,
       translateYPercent: (json['translateYPercent'] as num?)?.toDouble() ?? 0.0,
       alignment: json['alignment'] as String? ?? 'center',

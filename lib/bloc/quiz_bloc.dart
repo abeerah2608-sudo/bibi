@@ -252,6 +252,9 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
       }
 
       // Merge questions into configData before parsing
+      if (questions.isNotEmpty) {
+        configData['totalQuestions'] = questions.length;
+      }
       configData['questions'] = questions.map((q) => {
         'number': q.number,
         'textKey': q.textKey,

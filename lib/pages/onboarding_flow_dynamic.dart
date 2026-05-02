@@ -103,6 +103,15 @@ class _OnboardingFlowDynamicState extends State<OnboardingFlowDynamic>
     });
   }
 
+  Color _parseColor(String? value, Color fallback) {
+    if (value == null || value.isEmpty) return fallback;
+    try {
+      return Color(int.parse(value.replaceFirst('#', '0xff')));
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
@@ -468,30 +477,55 @@ class _OnboardingFlowDynamicState extends State<OnboardingFlowDynamic>
                                 ),
                               ),
 
-                              // ── TEXT ───────────────────────────────────────────
-                              Positioned(
-                                top: 0.10.sh,
-                                left: 0.50.sw + 30.w,
-                                right: 20.w,
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 400),
-                                  child: Directionality(
-                                    key: ValueKey<int>(_currentPage),
-                                    textDirection: isUrdu
-                                        ? TextDirection.rtl
-                                        : TextDirection.ltr,
-                                    child: DefaultTextStyle(
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18.sp,
-                                        color: Colors.black,
+                              // ── TEXT: choose layout based on page type/id ─────
+                              if (currentPageData.pageType == 'left_animation_bottom_text' ||
+                                  currentPageData.id == 'page_8' ||
+                                  currentPageData.id == 'page_9')
+                                Positioned(
+                                  bottom: 24.h,
+                                  left: 24.w,
+                                  right: 24.w,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 400),
+                                    child: Directionality(
+                                      key: ValueKey<int>(_currentPage),
+                                      textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                                      child: DefaultTextStyle(
+                                        style: TextStyle(
+                                          fontFamily: currentPageData.textStyle.titleFontFamily ?? 'Inter',
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: (currentPageData.textStyle.bottomTitleFontSize ?? currentPageData.textStyle.titleFontSize ?? currentPageData.textStyle.fontSize ?? 18).sp,
+                                          color: _parseColor(currentPageData.textStyle.titleColor ?? currentPageData.textStyle.color ?? '#8B5E3C', Colors.black),
+                                        ),
+                                        child: TextParsingUtils.parseBold(title),
                                       ),
-                                      child: TextParsingUtils.parseBold(title),
+                                    ),
+                                  ),
+                                )
+                              else
+                                Positioned(
+                                  top: 0.10.sh,
+                                  left: 0.50.sw + 30.w,
+                                  right: 20.w,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 400),
+                                    child: Directionality(
+                                      key: ValueKey<int>(_currentPage),
+                                      textDirection: isUrdu
+                                          ? TextDirection.rtl
+                                          : TextDirection.ltr,
+                                      child: DefaultTextStyle(
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 18.sp,
+                                          color: Colors.black,
+                                        ),
+                                        child: TextParsingUtils.parseBold(title),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

@@ -15,6 +15,13 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   late final Future<Map<String, dynamic>?> _configFuture;
   String _currentLanguage = 'English'; // Default language
 
+  int _asSectionNumber(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim()) ?? 0;
+    return 0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +46,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
           .collection('app_config')
           .doc('privacy_policy')
           .collection('sections')
+          .orderBy('number')
           .get();
       
       // Add sections to config
@@ -51,15 +59,9 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
       
       // Sort sections by number if available
       sections.sort((a, b) {
-        final aNum = a['number'];
-        final bNum = b['number'];
-        if (aNum is int && bNum is int) return aNum.compareTo(bNum);
-        if (aNum is String && bNum is String) {
-          final aParsed = int.tryParse(aNum) ?? 0;
-          final bParsed = int.tryParse(bNum) ?? 0;
-          return aParsed.compareTo(bParsed);
-        }
-        return 0;
+        final aNum = _asSectionNumber(a['number']);
+        final bNum = _asSectionNumber(b['number']);
+        return aNum.compareTo(bNum);
       });
       
       config['sections'] = sections;
@@ -161,6 +163,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
     return Text(
       text,
       style: TextStyle(
+        fontFamily: 'Inter',
         fontSize: _double(styles['bodyFontSize'], 12.5).sp,
         color: _color(styles['bodyColor'], const Color(0xFF444444)),
         height: _double(styles['bodyLineHeight'], 1.6),
@@ -205,119 +208,214 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   }
 
   Widget _renderSection(Map<String, dynamic> section, Map<String, dynamic> textStyles) {
-    final type = section['type']?.toString() ?? 'text';
-    final title = _translate(section['title']);
-    final number = section['number'];
+  final type = section['type']?.toString() ?? 'text';
+  final title = _translate(section['title']);
+  final number = section['number'];
+  final displayNumber = _asSectionNumber(number) + 1;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (title.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(bottom: 8.h),
-            child: Text(
-              '$number. $title',
-              style: TextStyle(
-                fontSize: _double(textStyles['bodyFontSize'], 12.5).sp + 2,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFFE8677A),
-                height: 1.4,
-              ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (title.isNotEmpty)
+        Padding(
+          padding: EdgeInsets.only(bottom: 8.h),
+          child: Text(
+            '$displayNumber. $title',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: _double(textStyles['bodyFontSize'], 12.5).sp + 2,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFFE8677A),
+              height: 1.4,
             ),
           ),
-        
-        // Body text if present
-        if (section['body'] != null)
-          Padding(
-            padding: EdgeInsets.only(bottom: 8.h),
-            child: _bodyText(textStyles, _translate(section['body'])),
-          ),
-
-        // Render based on type
-        if (type == 'bullets' && section['items'] != null)
-          _bulletList(textStyles, section['items'] as List),
-        
-        if (type == 'table')
-          _renderTable(section['table']),
-        
-        if (type == 'mixed')
-          _renderMixedSection(section, textStyles),
-        
-        if (type == 'qa_cards')
-          _renderQACards(section),
-        
-        if (type == 'contact')
-          _renderContactInfo(section),
-
-        // Render subsections if present
-        if (section['subsections'] != null)
-          ...(section['subsections'] as List).map((subsection) => 
-            Padding(
-              padding: EdgeInsets.only(top: 12.h, left: 16.w),
-              child: _renderSection(_map(subsection), textStyles),
-            ),
-          ),
-
-        SizedBox(height: 20.h),
-      ],
-    );
-  }
-
-  Widget _renderTable(dynamic tableData) {
-    if (tableData == null) return const SizedBox.shrink();
-    
-    final table = _map(tableData);
-    final columns = _map(table['columns']);
-    final rows = table['rows'] as List? ?? [];
-    
-    final columnHeaders = columns[_currentLanguage] as List? ?? 
-                         columns['English'] as List? ?? 
-                         [];
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDDDDD), width: 1),
-        borderRadius: BorderRadius.circular(6.r),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6.r),
-        child: Table(
-          columnWidths: const {
-            0: FlexColumnWidth(1.1),
-            1: FlexColumnWidth(0.6),
-            2: FlexColumnWidth(1.8),
-          },
-          border: TableBorder(
-            horizontalInside: BorderSide(color: const Color(0xFFDDDDDD), width: 1),
-          ),
-          children: [
-            // Header row
-            TableRow(
-              decoration: const BoxDecoration(color: Color(0xFFFFE4EC)),
-              children: columnHeaders.map((header) => _cell(header.toString(), header: true)).toList(),
-            ),
-            // Data rows
-            ...rows.asMap().entries.map((entry) {
-              final row = _map(entry.value);
-              final isEven = entry.key % 2 == 0;
-              
-              return TableRow(
-                decoration: BoxDecoration(
-                  color: isEven ? const Color(0xFFFFF6F7) : Colors.white,
-                ),
-                children: [
-                  _cell(_translate(row['dataType'])),
-                  _cell(_translate(row['collected'])),
-                  _cell(_translate(row['purpose'])),
-                ],
-              );
-            }),
-          ],
         ),
-      ),
-    );
-  }
+      
+      // Body text if present
+      if (section['body'] != null)
+        Padding(
+          padding: EdgeInsets.only(bottom: 8.h),
+          child: _bodyText(textStyles, _translate(section['body'])),
+        ),
 
+      // Paragraphs (for text_and_table type)
+      if (section['paragraphs'] != null)
+        ...(section['paragraphs'] as List).map((para) => 
+          Padding(
+            padding: EdgeInsets.only(bottom: 8.h),
+            child: _bodyText(textStyles, _translate(para)),
+          ),
+        ),
+
+      // Render based on type
+      if (type == 'bullets' && section['items'] != null)
+        _bulletList(textStyles, section['items'] as List),
+      
+      // Handle both 'table' key and 'tableData' key
+      if (type == 'table' && (section['table'] != null || section['tableData'] != null))
+        _renderTableSection0(section),  // New method for section 0 style
+      
+      // Handle text_and_table type (section 4)
+      if (type == 'text_and_table' && section['table'] != null)
+        _renderTableSection4(section['table']),  // For section 4 style
+      
+      if (type == 'mixed')
+        _renderMixedSection(section, textStyles),
+      
+      if (type == 'qa_cards')
+        _renderQACards(section),
+      
+      if (type == 'contact')
+        _renderContactInfo(section),
+
+      // Render subsections if present
+      if (section['subsections'] != null)
+        ...(section['subsections'] as List).map((subsection) => 
+          Padding(
+            padding: EdgeInsets.only(top: 12.h, left: 16.w),
+            child: _renderSection(_map(subsection), textStyles),
+          ),
+        ),
+
+      SizedBox(height: 20.h),
+    ],
+  );
+}
+
+// For Section 0 - "At a Glance" table
+Widget _renderTableSection0(Map<String, dynamic> section) {
+  final tableData = section['tableData'] as List? ?? [];
+  final tableStyle = _map(section['tableStyle']);
+  
+  return Container(
+    decoration: BoxDecoration(
+      border: Border.all(
+        color: _color(tableStyle['borderColor'], const Color(0xFFDDDDDD)),
+        width: _double(tableStyle['borderWidth'], 1),
+      ),
+      borderRadius: BorderRadius.circular(_double(tableStyle['borderRadius'], 6).r),
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(_double(tableStyle['borderRadius'], 6).r),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(1.2),
+          1: FlexColumnWidth(1.8),
+        },
+        border: TableBorder(
+          horizontalInside: BorderSide(
+            color: _color(tableStyle['borderColor'], const Color(0xFFDDDDDD)),
+            width: _double(tableStyle['borderWidth'], 1),
+          ),
+        ),
+        children: tableData.asMap().entries.map((entry) {
+          final row = _map(entry.value);
+          final isEven = entry.key % 2 == 0;
+          
+          return TableRow(
+            decoration: BoxDecoration(
+              color: isEven 
+                ? _color(tableStyle['evenRowColor'], const Color(0xFFFFF6F7))
+                : _color(tableStyle['oddRowColor'], Colors.white),
+            ),
+            children: [
+              _cellStyled(
+                _translate(row['col0']), 
+                tableStyle, 
+                header: true,
+              ),
+              _cellStyled(
+                _translate(row['col1']), 
+                tableStyle,
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    ),
+  );
+}
+
+// For Section 4 - Data collection table
+Widget _renderTableSection4(dynamic tableData) {
+  if (tableData == null) return const SizedBox.shrink();
+  
+  final table = _map(tableData);
+  final columns = _map(table['columns']);
+  final rows = table['rows'] as List? ?? [];
+  
+  final columnHeaders = columns[_currentLanguage] as List? ?? 
+                       columns['English'] as List? ?? 
+                       [];
+
+  return Container(
+    decoration: BoxDecoration(
+      border: Border.all(color: const Color(0xFFDDDDDD), width: 1),
+      borderRadius: BorderRadius.circular(6.r),
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(6.r),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(1.1),
+          1: FlexColumnWidth(0.6),
+          2: FlexColumnWidth(1.8),
+        },
+        border: TableBorder(
+          horizontalInside: BorderSide(color: const Color(0xFFDDDDDD), width: 1),
+        ),
+        children: [
+          // Header row
+          TableRow(
+            decoration: const BoxDecoration(color: Color(0xFFFFE4EC)),
+            children: columnHeaders.map((header) => _cell(header.toString(), header: true)).toList(),
+          ),
+          // Data rows
+          ...rows.asMap().entries.map((entry) {
+            final row = _map(entry.value);
+            final isEven = entry.key % 2 == 0;
+            
+            return TableRow(
+              decoration: BoxDecoration(
+                color: isEven ? const Color(0xFFFFF6F7) : Colors.white,
+              ),
+              children: [
+                _cell(_translate(row['dataType'])),
+                _cell(_translate(row['collected'])),
+                _cell(_translate(row['purpose'])),
+              ],
+            );
+          }),
+        ],
+      ),
+    ),
+  );
+}
+
+// Add this helper for section 0 cells with styling
+Widget _cellStyled(String text, Map<String, dynamic> style, {bool header = false}) {
+  return Padding(
+    padding: EdgeInsets.all(_double(style['cellPadding'], 10).w),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: _double(
+          header ? style['headerFontSize'] : style['bodyFontSize'], 
+          12,
+        ).sp,
+        color: _color(
+          header ? style['headerColor'] : style['bodyColor'],
+          const Color(0xFF333333),
+        ),
+        fontWeight: _weight(
+          header ? style['headerFontWeight'] : style['bodyFontWeight'],
+          fallback: header ? FontWeight.w600 : FontWeight.w400,
+        ),
+        height: _double(style['lineHeight'], 1.4),
+      ),
+    ),
+  );
+}
   Widget _renderMixedSection(Map<String, dynamic> section, Map<String, dynamic> textStyles) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

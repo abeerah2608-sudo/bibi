@@ -621,10 +621,26 @@ Expanded(
           return const SizedBox.shrink();
         }
 
+        // Compute animation scale with defensive parsing from raw data
+        double _parseScaleFromRaw() {
+          try {
+            final raw = currentPageData.rawData;
+            final anim = (raw['animation'] is Map) ? Map<String, dynamic>.from(raw['animation']) :
+                ((raw['animationConfig'] is Map) ? Map<String, dynamic>.from(raw['animationConfig']) : <String, dynamic>{});
+            final v = anim['scale'];
+            if (v == null) return currentPageData.animation.scale;
+            if (v is num) return v.toDouble();
+            if (v is String) return double.tryParse(v.trim()) ?? currentPageData.animation.scale;
+          } catch (_) {}
+          return currentPageData.animation.scale;
+        }
+
+        final animationScale = _parseScaleFromRaw();
+
         return OnboardingAnimation(
           key: ValueKey('page_${currentPageData.id}'),
           assetPath: currentPageData.animationPath,
-          scale: currentPageData.animation.scale,
+          scale: animationScale,
           translateXPercent: currentPageData.animation.translateXPercent,
           translateYPercent: currentPageData.animation.translateYPercent,
           alignment: currentPageData.animation.getAlignment(),

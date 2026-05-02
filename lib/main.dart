@@ -11,7 +11,6 @@ import 'pages/splashScreen.dart';
 import 'services/animation_cache_service.dart' hide debugPrint;
 import 'services/language_strings.dart';
 import 'services/onboarding_service.dart';
-import 'services/dynamic_content_service.dart';
 import 'pages/onboarding_flow_dynamic.dart';
 import 'pages/dashboard.dart';
 import 'services/app_route_observer.dart';

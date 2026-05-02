@@ -51,10 +51,14 @@ class _QuizPage1State extends State<QuizPage1> {
     String fallbackKey = 'English',
   }) {
     final normalizedLanguage = _normalizeLanguageKey(language);
-    return translations[normalizedLanguage] ??
-        translations[fallbackKey] ??
-        (translations.isNotEmpty ? translations.values.first : '') ??
-        '';
+    // Prefer Firestore keys: 'اردو' for Urdu, 'Roman Urdu' for romanized Urdu, otherwise English
+    if (normalizedLanguage == 'Urdu') {
+      return translations['اردو'] ?? translations['Urdu'] ?? translations[fallbackKey] ?? (translations.isNotEmpty ? translations.values.first : '') ?? '';
+    }
+    if (normalizedLanguage == 'Roman Urdu') {
+      return translations['Roman Urdu'] ?? translations[fallbackKey] ?? (translations.isNotEmpty ? translations.values.first : '') ?? '';
+    }
+    return translations['English'] ?? translations[fallbackKey] ?? (translations.isNotEmpty ? translations.values.first : '') ?? '';
   }
 
   List<String?> _resizeAnswers(List<String?> answers, int totalQuestions) {
