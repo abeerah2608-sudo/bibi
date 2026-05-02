@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "2.0.0",
+  "metadata": { "version": "2.0.0", "sourceFile": "onboardingFlow.json", "convertedOn": "2026-04-30", "notes": "Refactored component-based pages derived from onboardingFlow.json" },
+  "assets": {
+    "animations": {
+      "Bibi_Onboarding_Leftt.lottie": "gs://bibi-app-d41a0.firebasestorage.app/animations/Bibi_Onboarding_Leftt.lottie"
+    },
+    "audio": {
+      "onboarding_1.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_1.mp3",
+      "onboarding_1_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_1_urdu.mp3",
+      "onboarding_2.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_2.mp3",
+      "onboarding_2_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_2_urdu.mp3",
+      "onboarding_3.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_3.mp3",
+      "onboarding_3_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_3_urdu.mp3",
+      "onboarding_4.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_4.mp3",
+      "onboarding_4_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_4_urdu.mp3",
+      "onboarding_5.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_5.mp3",
+      "onboarding_5_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_5_urdu.mp3",
+      "onboarding_6.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_6.mp3",
+      "onboarding_6_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_6_urdu.mp3",
+      "onboarding_7.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_7.mp3",
+      "onboarding_7_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_7_urdu.mp3"
+    }
+  },
+  "styleTokens": { "textStyles": { "overlay": { "fontSize": 28, "fontWeight": "w800", "fontFamily": "Inter", "color": "#8B5E3C", "textAlign": "center" } } },
+  "pages": [
+    {
+      "id": "page_1",
+      "order": 0,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_1.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_1_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "assalam_o_alaikum", "translations": { "English": "Assalam-o-Alaikum!", "اردو": "السلام علیکم!", "Roman Urdu": "Assalam-o-Alaikum!" } }, "styleRef": "overlay", "position": { "alignment": "center_right" } }
+      ]
+    },
+    {
+      "id": "page_2",
+      "order": 1,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_2.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_2_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "im_bibi", "translations": { "English": "My name is\n [b]Bibi[/b]", "اردو": "میرا نام [b]بِبی[/b] ہے", "Roman Urdu": "Mera naam [b]BIBI[/b] hai" } }, "styleRef": "overlay", "position": { "alignment": "center_right" }, "behavior": { "supportsBoldParsing": true } }
+      ]
+    },
+    {
+      "id": "page_3",
+      "order": 2,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_3.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_3_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "breast_cancer", "translations": { "English": "And i am a \nBreast Cancer [b]Survivor[/b]", "اردو": "اور میں بریسٹ کینسر سے\n[b]صحتیاب[/b] ہونے والی مریضہ ہوں", "Roman Urdu": "Aur main breast cancer \n survivor hoon" } }, "styleRef": "overlay", "position": { "alignment": "center_right" }, "behavior": { "supportsBoldParsing": true } }
+      ]
+    },
+    {
+      "id": "page_4",
+      "order": 3,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_4.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_4_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "welcome", "translations": { "English": "Welcome to the \n BIBI app", "اردو": "BIBI ایپ میں\nخوش آمدید", "Roman Urdu": "BIBI app mein khosh aamdeed" } }, "styleRef": "overlay", "position": { "alignment": "center_right" } }
+      ]
+    },
+    {
+      "id": "page_5",
+      "order": 4,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_5.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_5_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "life", "translations": { "English": "life is beautiful \n and health is wealth", "اردو": "زندگی خوبصورت ہے\nاور صحت ہی دولت ہے", "Roman Urdu": "Zindagi khoobsurat hai aur sehat sab kuch hai" } }, "styleRef": "overlay", "position": { "alignment": "center_right" } }
+      ]
+    },
+    {
+      "id": "page_6",
+      "order": 5,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_6.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_6_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "awareness", "translations": { "English": "I'm here to raise \n awareness about \n breast cancer", "اردو": "میں بریسٹ کینسر کے\nبارے میں آگاہی\nپھیلانے کے لیے یہاں ہوں", "Roman Urdu": "Breast cancer ke baaray mein aagahi dene ain hoon" } }, "styleRef": "overlay", "position": { "alignment": "center_right" } }
+      ]
+    },
+    {
+      "id": "page_7",
+      "order": 6,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_7.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_7_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "anim", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 }, "preferredAlignment": "center_left" }, "position": { "alignment": "center_left" } },
+        { "id": "text", "type": "text", "content": { "textKey": "fulfill", "translations": { "English": "Lead a healthy \n and fulfilling life", "اردو": "ایک صحت مند اور\nخوشحال زندگی گزاریں", "Roman Urdu": "Ek sehatmand zindagi guzarain" } }, "styleRef": "overlay", "position": { "alignment": "center_right" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "2.0.0",
+  "metadata": {
+    "version": "2.0.0",
+    "sourceFile": "additional_pages.json",
+    "convertedOn": "2026-04-30",
+    "notes": "Refactored additional pages; converted tableData rows to objects to avoid nested-array upload issues"
+  },
+  "assets": {
+    "animations": {
+      "splash.lottie": "gs://bibi-app-d41a0.firebasestorage.app/animations/splash.lottie"
+    },
+    "audio": {}
+  },
+  "pages": [
+    {
+      "id": "privacy_policy_page",
+      "type": "content",
+      "background": { "color": "#FFFFFF" },
+      "components": [
+        {
+          "id": "appBar",
+          "type": "appBar",
+          "config": { "backgroundColor": "#E8677A", "title": "Privacy Policy", "titleColor": "#FFFFFF", "centerTitle": true }
+        },
+        {
+          "id": "header",
+          "type": "hero",
+          "style": { "backgroundColor": "#E8677A", "verticalPadding": 20 },
+          "content": {
+            "shieldIcon": { "containerSize": 70, "backgroundColor": "#D45068", "icon": "lock", "iconColor": "#FFFFFF" },
+            "platform": { "platform": "Android (Google Play Store only)", "effectiveDate": "1 April 2026" }
+          }
+        },
+        {
+          "id": "disclaimer",
+          "type": "banner",
+          "style": { "backgroundColor": "#FFF0F2", "borderColor": "#E8677A", "borderRadius": 8 },
+          "content": { "text": "BIBI – Breast Cancer Awareness App is an educational awareness app and not a medical diagnosis or treatment service.", "textStyle": { "fontSize": 12 } }
+        },
+        {
+          "id": "at_a_glance",
+          "type": "table",
+          "title": "At a Glance",
+          "rows": [
+            { "label": "App Name", "value": "BIBI – Breast Cancer Awareness" },
+            { "label": "Developer/Controller", "value": "BIBI App Team" },
+            { "label": "Contact Email", "value": "support@aanganapp.com" },
+            { "label": "Platform", "value": "Android (Google Play Store only)" },
+            { "label": "App Category", "value": "Health & Fitness – Awareness & Education" },
+            { "label": "Does the app collect personal data?", "value": "Minimal – see Section 4 for full details" },
+            { "label": "Is data sold to third parties?", "value": "No. Never." },
+            { "label": "Is there advertising?", "value": "No advertisements of any kind" },
+            { "label": "Minimum age", "value": "13 years" },
+            { "label": "Governing Law", "value": "Islamic Republic of Pakistan" },
+            { "label": "Last Updated", "value": "1 April 2026" }
+          ],
+          "style": { "borderColor": "#DDDDDD", "evenRowColor": "#FFF6F7" }
+        },
+        {
+          "id": "sections",
+          "type": "accordion",
+          "items": [
+            {
+              "id": "introduction",
+              "title": "Introduction",
+              "content": {
+                "paragraphs": [
+                  "BIBI is a free, educational mobile application designed to raise awareness about breast cancer through engaging animations and storytelling. BIBI does not provide medical diagnoses, treatment plans, or clinical advice of any kind.",
+                  "This Privacy Policy explains what information BIBI collects from users of the Android Application (the \"Service\"), how that information is used, and the rights users hold over their data.",
+                  "By downloading and using BIBI, you confirm that you have read and understood this Privacy Policy and agree to the data practices described herein."
+                ],
+                "bullets": [
+                  "Google Play Store Data Safety Section and User Data Policy",
+                  "Google Play Health Apps Declaration requirements",
+                  "Pakistan's PECA 2016 and applicable data-protection principles",
+                  "GDPR (EEA users), CCPA/CPRA (California users), and UK-GDPR (UK users)"
+                ]
+              }
+            },
+            { "id": "definitions", "title": "Definition", "content": { "bullets": ["App or Service - the BIBI Android mobile application.", "Personal Data - any information that can identify you directly or indirectly.", "Sensitive Data - special category data such as health or medical information."] } },
+            { "id": "nature_of_app", "title": "Nature of the App - Important Health & Medical Disclaimer", "content": { "bullets": ["BIBI does not diagnose breast cancer or any medical condition.", "BIBI does not recommend medication, treatment, or surgery.", "BIBI content is not a substitute for consultation with qualified healthcare professionals."] , "paragraphs": ["Because BIBI is an awareness and education application, it does not collect, store, or process personal health data such as medical records, diagnoses, test results, or symptom logs."] } },
+            { "id": "information_collection", "title": "Information We Collect and Why", "content": { "paragraphs": ["BIBI does not collect personally identifiable information. Collected data is anonymized and aggregated. BIBI follows Data Minimization and collects only what is necessary for the app to function and improve."] } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quiz_page",
+      "type": "quiz",
+      "components": [],
+      "content": {
+        "quizId": 1,
+        "totalQuestions": 6
+      }
+    },
+    {
+      "id": "quiz_completion_page",
+      "type": "content",
+      "components": [
+        { "id": "completion", "type": "badge", "content": { "label": "Completion" } },
+        { "id": "messages", "type": "textGroup", "content": { "perfect": { "English": "Consult a doctor or a\nhealth worker!" }, "incomplete": { "English": "Keep learning to\nstay informed!" } } }
+      ]
+    },
+    {
+      "id": "testimonials_page",
+      "type": "collection",
+      "background": { "color": "#FFF5F5" },
+      "components": [
+        { "id": "topBar", "type": "topBar", "config": { "titleKey": "testimonials" } },
+        { "id": "testimonials_list", "type": "list", "items": "@@inline_from_source:testimonials.testimonials" }
+      ]
+    },
+    {
+      "id": "splash_screen",
+      "type": "screen",
+      "components": [
+        { "id": "splash_anim", "type": "lottie", "assetKey": "splash.lottie", "behavior": { "loop": true } }
+      ],
+      "navigation": { "onboardingCompleted": "dashboard", "onboardingIncomplete": "language_selection" }
+    }
+  ],
+  "notes": "Converted table rows into objects (label/value) to avoid nested array upload issue in Firestore. Testimonials `items` kept as inline-source hint; uploader can resolve or expand."
+}

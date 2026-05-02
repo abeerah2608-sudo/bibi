@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "68134674517",
+    "project_id": "bibi-app-d41a0",
+    "storage_bucket": "bibi-app-d41a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68134674517:android:626a0cb954753985a3b4dc",
+        "android_client_info": {
+          "package_name": "com.example.bibi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCW1R0_dEMaqA2TT20_QVMnOuwQlidMzBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

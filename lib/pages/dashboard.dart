@@ -1,33 +1,31 @@
+import 'package:bibi/pages/discover.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../bloc/bloc_exports.dart';
+import '../bloc/dashboard_bloc.dart';
+import '../models/dashboard_models.dart';
+import '../models/video_card_data.dart';
 import '../services/language_strings.dart';
 import '../services/quiz_service.dart';
+import '../services/remote_asset_service.dart';
+import '../widgets/cached_logo_image.dart';
 import 'quiz_page_1.dart';
+import 'favourites.dart';
+import 'video_card.dart';
 import 'quiz_completion_page.dart';
-import 'audio_player_page.dart' show AudioPlayerPage,  allAudioContent, AudioContent, audioContent1, audioContent2, audioContent3, audioContent4, audioContent5, audioContent6, audioContent7;
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Breast Health Dashboard',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFE91E8C)),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-      ),
-      home: const DashboardScreen(),
-    );
-  }
-}
+import 'audio_player_page.dart'
+    show
+        AudioPlayerPage,
+        allAudioContent,
+        AudioContent,
+        audioContent1,
+        audioContent2,
+        audioContent3,
+        audioContent4,
+        audioContent5,
+        audioContent6,
+        audioContent7;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -37,88 +35,79 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin  {
   late TabController _tabController;
-
-  final List<String> _tabs = ['Basics', 'Care', 'Support'];
-
-  final Map<String, List<VideoCardData>> _tabContent = {
-    'Basics': [
-      VideoCardData(
-        title: 'What is Breast Cancer?',
-        subtitle: 'Understanding the basics in 5 min',
-        duration: '0:21',
-        imagePlaceholder: 'whatIsIt.png',
-        titleKey: 'cancer_cell',
-        subtitleKey: 'what_subtitle',
-        audioContent: audioContent1,
-      ),
-      VideoCardData(
-        title: 'Are you at risk?',
-        subtitle: 'When an abnormality is found',
-        duration: '0:16',
-        imagePlaceholder: 'risk.png',
-        titleKey: 'family_tree',
-        subtitleKey: 'risk_subtitle',
-        audioContent: audioContent2,
-      ),
-    ],
-    'Care': [
-      VideoCardData(
-        title: 'Preventive Screening',
-        subtitle: 'Understanding concepts of preventive screening',
-        duration: '0:25',
-        imagePlaceholder: 'mammogram.jpg',
-        accentColor: Color(0xFFE91E8C),
-        titleKey: 'self_examine_card_title',
-        subtitleKey: 'screening_subtitle',
-        audioContent: audioContent3,
-      ),
-      VideoCardData(
-        title: 'How to Treat?',
-        subtitle: 'Care options after detection',
-        duration: '0:24',
-        imagePlaceholder: 'treat.jpg',
-        titleKey: 'how_to_treat_title',
-        subtitleKey: 'treat_subtitle',
-        audioContent: audioContent4,
-      ),
-      VideoCardData(
-        title: 'How to Confirm?',
-        subtitle: 'Tests and checks to know for sure',
-        duration: '0:19',
-        imagePlaceholder: 'check.jpg',
-        titleKey: 'self_examine_title',
-        subtitleKey: 'check_subtitle',
-        audioContent: audioContent5,
-      ),
-    ],
-    'Support': [
-      VideoCardData(
-        title: 'How to Prevent?',
-        subtitle: 'Simple steps to lower the risk',
-        duration: '0:17',
-        imagePlaceholder: 'prevent.jpg',
-        titleKey: 'how_to_prevent_title',
-        subtitleKey: 'prevent_subtitle',
-        audioContent: audioContent6,
-      ),
-      VideoCardData(
-        title: 'How to Support?',
-        subtitle: 'Ways to help with care and comfort',
-        duration: '0:22',
-        imagePlaceholder: 'support.jpg',
-        titleKey: 'how_to_support_title',
-        subtitleKey: 'support_subtitle',
-        audioContent: audioContent7,
-      ),
-    ],
-  };
-
+  DashboardConfig? _config;
+  bool _isInitialized = false;
+  
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    debugPrint("🚀 DashboardScreen initState START");
+    
+    try {
+      _tabController = TabController(length: 3, vsync: this); // Default 3 tabs
+      debugPrint("✅ TabController initialized with 3 tabs");
+    } catch (e) {
+      debugPrint("❌ Error creating TabController: $e");
+    }
+
+    // Fetch dashboard config on next frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        debugPrint("📱 DashboardScreen: Post-frame callback executing");
+        if (!mounted) {
+          debugPrint("⚠️ DashboardScreen: Widget unmounted, skipping initialization");
+          return;
+        }
+        
+        final dashboardState = context.read<DashboardBloc>().state;
+        debugPrint("📊 DashboardScreen: Current bloc state = ${dashboardState.runtimeType}");
+        
+        if (dashboardState is DashboardLoaded) {
+          debugPrint('⚡ DashboardScreen: Using existing DashboardLoaded state (${dashboardState.config.tabs.length} tabs)');
+          _hydrateFromLoadedState(dashboardState);
+        } else {
+          debugPrint("📡 DashboardScreen: Fetching dashboard config from Firebase...");
+          context.read<DashboardBloc>().add(const FetchDashboardConfigEvent());
+        }
+      } catch (e, st) {
+        debugPrint("❌ DashboardScreen initState Error: $e");
+        debugPrint("   Stack: $st");
+      }
+    });
+  }
+
+  void _hydrateFromLoadedState(DashboardLoaded state) {
+    debugPrint("🔄 DashboardScreen: _hydrateFromLoadedState called");
+    
+    if (!mounted) {
+      debugPrint("⚠️ DashboardScreen: Widget unmounted in _hydrateFromLoadedState, skipping");
+      return;
+    }
+
+    try {
+      final previousController = _tabController;
+      final newLength = state.config.tabs.isEmpty ? 1 : state.config.tabs.length;
+      
+      debugPrint("📝 DashboardScreen: Creating new TabController with $newLength tabs");
+      
+      _tabController = TabController(
+        length: newLength,
+        vsync: this,
+      );
+      
+      setState(() {
+        _config = state.config;
+        _isInitialized = true;
+      });
+      
+      previousController.dispose();
+      debugPrint("✅ DashboardScreen: Hydration complete, config loaded with ${state.config.tabs.length} tabs");
+    } catch (e, st) {
+      debugPrint("❌ DashboardScreen: Error in _hydrateFromLoadedState: $e");
+      debugPrint("   Stack: $st");
+    }
   }
 
   @override
@@ -127,71 +116,234 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
+  String _languageKey(String language) {
+    switch (language) {
+      case 'Urdu':
+      case 'اردو':
+        return 'اردو';
+      case 'Roman Urdu':
+        return 'Roman Urdu';
+      case 'English':
+      default:
+        return 'English';
+    }
+  }
+
   void _showLanguageDialog() {
+    if (_config == null) return;
+    
     showDialog(
       context: context,
       barrierColor: Colors.black38,
-      builder: (context) => const _LanguageDialog(),
+      builder: (context) => _LanguageDialog(config: _config!.languageDialog),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LanguageBloc, LanguageState>(
-      builder: (context, state) {
-        String currentLanguage = 'English';
-        if (state is LanguageSelected) {
-          currentLanguage = state.language;
+    debugPrint("🏗️ DashboardScreen build() called - _isInitialized=$_isInitialized, _config=${_config != null}");
+    
+    return BlocListener<DashboardBloc, DashboardState>(
+      listener: (context, state) {
+        debugPrint("📡 DashboardScreen BlocListener: new state = ${state.runtimeType}");
+        try {
+          if (state is DashboardLoaded) {
+            debugPrint("✅ DashboardScreen BlocListener: Received DashboardLoaded state");
+            _hydrateFromLoadedState(state);
+          } else if (state is DashboardError) {
+            debugPrint("❌ DashboardScreen BlocListener: Received DashboardError - ${state.message}");
+          }
+        } catch (e, st) {
+          debugPrint("❌ DashboardScreen BlocListener error: $e");
+          debugPrint("   Stack: $st");
         }
-
-        return Scaffold(
-          backgroundColor: const Color(0xFFFFF4F4),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-
-                    // ── Welcome Banner (now contains globe icon) ──────────
-                    _WelcomeBanner(
-                      language: currentLanguage,
-                      onLanguageTap: _showLanguageDialog,
-                    ),
-
-                    const SizedBox(height: 16),
-                    _QuizCard(language: currentLanguage),
-                    const SizedBox(height: 16),
-                    _buildTabBar(currentLanguage),
-                    const SizedBox(height: 16),
-                    _buildTabContent(currentLanguage),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
       },
+      child: BlocBuilder<LanguageBloc, LanguageState>(
+        builder: (context, languageState) {
+          String currentLanguage = 'English';
+          if (languageState is LanguageSelected) {
+            currentLanguage = languageState.language;
+          }
+          debugPrint("🌐 DashboardScreen: currentLanguage=$currentLanguage");
+
+          return BlocBuilder<DashboardBloc, DashboardState>(
+            builder: (context, dashboardState) {
+              debugPrint("🧱 DashboardScreen builder: DashboardState=${dashboardState.runtimeType}");
+
+              // If bloc reports loaded but widget not yet hydrated, schedule hydration.
+              if (dashboardState is DashboardLoaded && !_isInitialized) {
+                debugPrint('🔔 DashboardScreen detected DashboardLoaded but not hydrated yet — scheduling hydration');
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  try {
+                    if (mounted) _hydrateFromLoadedState(dashboardState);
+                  } catch (e, st) {
+                    debugPrint('❌ Error scheduling _hydrateFromLoadedState: $e');
+                    debugPrint('   Stack: $st');
+                  }
+                });
+              }
+              
+              if (dashboardState is DashboardLoading) {
+                debugPrint("⏳ DashboardScreen: Loading state");
+                return _buildLoadingScreen();
+              }
+
+              if (dashboardState is DashboardError) {
+                debugPrint("❌ DashboardScreen: Error state - ${dashboardState.message}");
+                return _buildErrorScreen(dashboardState.message);
+              }
+
+              if (!_isInitialized || _config == null) {
+                debugPrint("⏳ DashboardScreen: Not initialized yet (_isInitialized=$_isInitialized, _config=${_config != null})");
+                return _buildLoadingScreen();
+              }
+
+              debugPrint("✅ DashboardScreen: Rendering dashboard with language=$currentLanguage");
+              return _buildDashboard(currentLanguage);
+            },
+          );
+        },
+      ),
     );
   }
 
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          color: const Color(0xFFFFF4F4),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFE91E8C),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorScreen(String message) {
+    debugPrint("🚨 DashboardScreen error screen: $message");
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          color: const Color(0xFFFFF4F4),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFFE91E8C),
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  'Error loading dashboard',
+                  style: TextStyle(fontSize: 16.sp),
+                ),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                ElevatedButton(
+                  onPressed: () {
+                    debugPrint("🔄 DashboardScreen: Retry button pressed");
+                    context
+                        .read<DashboardBloc>()
+                        .add(const FetchDashboardConfigEvent());
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboard(String language) {
+    debugPrint("🎨 DashboardScreen _buildDashboard START - language=$language");
+    
+    try {
+      if (_config == null) {
+        debugPrint("❌ DashboardScreen _buildDashboard: _config is null!");
+        return _buildErrorScreen("Config not loaded");
+      }
+      
+      debugPrint("📊 DashboardScreen config details:");
+      debugPrint("   - tabs count: ${_config!.tabs.length}");
+      debugPrint("   - backgroundColor: ${_config!.backgroundColor}");
+      
+      final config = _config!;
+      final backgroundColor = _parseHexColor(config.backgroundColor);
+
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 16.h),
+                  _WelcomeBanner(
+                    config: config.welcomeBanner,
+                    logoUrl: config.logoUrl,
+                    language: language,
+                    onLanguageTap: _showLanguageDialog,
+                  ),
+                  SizedBox(height: 16.h),
+                  _QuizCard(
+                    config: config.quizCard,
+                    language: language,
+                  ),
+                  SizedBox(height: 16.h),
+                  _buildTabBar(language),
+                  SizedBox(height: 16.h),
+                  _buildTabContent(language),
+                  SizedBox(height: 24.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint("❌ DashboardScreen _buildDashboard ERROR: $e");
+      debugPrint("   Stack: $st");
+      return _buildErrorScreen("Error building dashboard: $e");
+    }
+  }
+
   Widget _buildTabBar(String language) {
-    final tabs = [
-      LanguageStrings.getTranslation(language, 'basics_tab'),
-      LanguageStrings.getTranslation(language, 'care_tab'),
-      LanguageStrings.getTranslation(language, 'support_tab'),
-    ];
+    final config = _config!;
+    final key = _languageKey(language);
+    
+    final tabLabels = config.tabs.map((tab) {
+      return tab.translations[key] ?? 
+             tab.translations['English'] ?? 
+             tab.labelKey;
+    }).toList();
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFFF4F4),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(30.r),
         border: Border.all(
           color: const Color(0xFFF98CA9),
-          width: 1.2,
+          width: 1.2.w,
         ),
       ),
       child: TabBar(
@@ -199,44 +351,117 @@ class _DashboardScreenState extends State<DashboardScreen>
         onTap: (_) => setState(() {}),
         indicator: BoxDecoration(
           color: const Color(0xFFF98CA9),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(30.r),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: Colors.white,
         unselectedLabelColor: const Color(0xFF8B5E3C),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 14.sp,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w400,
+          fontSize: 14.sp,
+        ),
         dividerColor: Colors.transparent,
-        tabs: tabs.map((t) => Tab(text: t)).toList(),
+        tabs: tabLabels.map((label) => Tab(text: label)).toList(),
       ),
     );
   }
 
   Widget _buildTabContent(String language) {
-    final currentTab = _tabs[_tabController.index];
-    final cards = _tabContent[currentTab] ?? [];
+    final config = _config!;
+    
+    try {
+      // Guard against invalid tab index
+      if (config.tabs.isEmpty) {
+        debugPrint('⚠️ DashboardScreen: No tabs configured');
+        return Center(
+          child: Text(
+            'No tabs configured',
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+          ),
+        );
+      }
+      
+      final currentIndex = _tabController.index;
+      if (currentIndex >= config.tabs.length) {
+        debugPrint('⚠️ DashboardScreen: Tab index out of bounds: $currentIndex >= ${config.tabs.length}');
+        return Center(
+          child: Text(
+            'Invalid tab index',
+            style: TextStyle(fontSize: 14.sp, color: Colors.red),
+          ),
+        );
+      }
+      
+      final currentTabId = config.tabs[currentIndex].id;
+      final cards = config.videoCards[currentTabId] ?? [];
+      debugPrint('🎬 DashboardScreen: Building tab content for tab=$currentTabId with ${cards.length} cards');
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      child: Column(
-        key: ValueKey(currentTab),
-        children: cards
-            .map((card) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _VideoCard(data: card, language: language),
-                ))
-            .toList(),
-      ),
-    );
+      if (cards.isEmpty) {
+        return Center(
+          child: Text(
+            'No content for this tab',
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+          ),
+        );
+      }
+
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: ListView.separated(
+          key: ValueKey(currentTabId),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: cards.length,
+          separatorBuilder: (_, __) => SizedBox(height: 16.h),
+          itemBuilder: (context, index) {
+            try {
+              return _VideoCardFromFirebase(
+                data: cards[index],
+                language: language,
+              );
+            } catch (e, st) {
+              debugPrint('❌ Error building video card $index: $e');
+              debugPrint('   Stack: $st');
+              return SizedBox(
+                height: 100.h,
+                child: Center(
+                  child: Text('Error loading card: $e', textAlign: TextAlign.center),
+                ),
+              );
+            }
+          },
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('❌ DashboardScreen _buildTabContent ERROR: $e');
+      debugPrint('   Stack: $st');
+      return Center(
+        child: Text('Error: $e', textAlign: TextAlign.center),
+      );
+    }
+  }
+
+  Color _parseHexColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xff')));
+    } catch (_) {
+      return const Color(0xFFFFF4F4);
+    }
   }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
 // Language Dialog
 // ────────────────────────────────────────────────────────────────────────────
+
 class _LanguageDialog extends StatefulWidget {
-  const _LanguageDialog();
+  final LanguageDialogConfig config;
+  
+  const _LanguageDialog({required this.config});
 
   @override
   State<_LanguageDialog> createState() => _LanguageDialogState();
@@ -245,35 +470,42 @@ class _LanguageDialog extends StatefulWidget {
 class _LanguageDialogState extends State<_LanguageDialog> {
   String _selected = 'English';
 
-  final List<Map<String, String>> _languages = [
-    {'label': 'English', 'sub': ''},
-    {'label': 'Urdu', 'sub': 'اردو'},
-    {'label': 'Roman Urdu', 'sub': ''},
-  ];
+  String _languageKey(String language) {
+    return language == 'Urdu' ? 'اردو' : language;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final currentState = context.read<LanguageBloc>().state;
+    if (currentState is LanguageSelected) {
+      _selected = currentState.language;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dialogTitle = LanguageStrings.getTranslation(
-      context.read<LanguageBloc>().state is LanguageSelected
-          ? (context.read<LanguageBloc>().state as LanguageSelected).language
-          : 'English',
-      'choose_language',
-    );
-    final dialogSubtitle = LanguageStrings.getTranslation(
-      context.read<LanguageBloc>().state is LanguageSelected
-          ? (context.read<LanguageBloc>().state as LanguageSelected).language
-          : 'English',
-      'select_language_preference',
-    );
+    final currentLanguage = context.read<LanguageBloc>().state is LanguageSelected
+        ? (context.read<LanguageBloc>().state as LanguageSelected).language
+        : 'English';
+    final languageKey = _languageKey(currentLanguage);
+
+    final dialogTitle = widget.config.chooseLangTranslations[languageKey] ??
+        widget.config.chooseLangTranslations['English'] ??
+        'Choose Language';
+
+    final dialogSubtitle = widget.config.selectLangTranslations[languageKey] ??
+        widget.config.selectLangTranslations['English'] ??
+        'Select the language you prefer';
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+      insetPadding: EdgeInsets.symmetric(horizontal: 40.w),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+        padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 28.h),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF8F8),
-          borderRadius: BorderRadius.circular(24),
+          color: _parseHexColor(widget.config.backgroundColor),
+          borderRadius: BorderRadius.circular(widget.config.borderRadius.toDouble().r),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -282,46 +514,55 @@ class _LanguageDialogState extends State<_LanguageDialog> {
               alignment: Alignment.centerRight,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close,
-                    size: 20, color: Color(0xFF888888)),
+                child: Icon(
+                  Icons.close,
+                  size: 20.r,
+                  color: const Color(0xFF888888),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               dialogTitle,
-              style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF333333)),
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF333333),
+              ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6.h),
             Text(
               dialogSubtitle,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: const Color(0xFF888888),
+              ),
             ),
-            const SizedBox(height: 20),
-            ..._languages.map((lang) {
-              final isSelected = _selected == lang['label'];
+            SizedBox(height: 20.h),
+            ...widget.config.languages.map((lang) {
+              final isSelected = _selected == lang.label;
               return GestureDetector(
                 onTap: () {
-                  setState(() => _selected = lang['label']!);
+                  setState(() => _selected = lang.label);
                   context
                       .read<LanguageBloc>()
-                      .add(SelectLanguageEvent(lang['label']!));
+                      .add(SelectLanguageEvent(lang.label));
                   Navigator.pop(context);
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(
                       color: isSelected
                           ? const Color(0xFFF98CA9)
                           : const Color(0xFFEDD5D5),
-                      width: 1.2,
+                      width: 1.2.w,
                     ),
                   ),
                   child: Row(
@@ -330,38 +571,42 @@ class _LanguageDialogState extends State<_LanguageDialog> {
                       Row(
                         children: [
                           Text(
-                            lang['label']!,
-                            style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF333333)),
+                            lang.label,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF333333),
+                            ),
                           ),
-                          if (lang['sub']!.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            Text(lang['sub']!,
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF888888))),
+                          if (lang.sublabel.isNotEmpty) ...[
+                            SizedBox(width: 8.w),
+                            Text(
+                              lang.sublabel,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: const Color(0xFF888888),
+                              ),
+                            ),
                           ],
                         ],
                       ),
                       Container(
-                        width: 20,
-                        height: 20,
+                        width: 20.r,
+                        height: 20.r,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
                                 ? const Color(0xFFF98CA9)
                                 : const Color(0xFFCCCCCC),
-                            width: 1.5,
+                            width: 1.5.w,
                           ),
                         ),
                         child: isSelected
                             ? Center(
                                 child: Container(
-                                  width: 10,
-                                  height: 10,
+                                  width: 10.r,
+                                  height: 10.r,
                                   decoration: const BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: Color(0xFFF98CA9),
@@ -380,42 +625,55 @@ class _LanguageDialogState extends State<_LanguageDialog> {
       ),
     );
   }
+
+  Color _parseHexColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xff')));
+    } catch (_) {
+      return const Color(0xFFFFF8F8);
+    }
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
 // Welcome Banner
 // ────────────────────────────────────────────────────────────────────────────
-class _WelcomeBanner extends StatefulWidget {
+
+class _WelcomeBanner extends StatelessWidget {
+  final WelcomeBannerConfig config;
+  final String logoUrl;
   final String language;
   final VoidCallback onLanguageTap;
-  const _WelcomeBanner(
-      {required this.language, required this.onLanguageTap});
 
-  @override
-  State<_WelcomeBanner> createState() => _WelcomeBannerState();
-}
-
-class _WelcomeBannerState extends State<_WelcomeBanner> {
-  bool _isFavorite = false;
+  const _WelcomeBanner({
+    required this.config,
+    required this.logoUrl,
+    required this.language,
+    required this.onLanguageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final greetingText = LanguageStrings.getTranslation(widget.language, 'good_morning');
-    final careText =
-        LanguageStrings.getTranslation(widget.language, 'breast_care')
-            .replaceAll('[b]', '')
-            .replaceAll('[/b]', '');
+    final key = language == 'Urdu' ? 'اردو' : language;
+
+    final greetingText = config.greetingTranslations[key] ??
+        config.greetingTranslations['English'] ??
+        'Good Morning, Bibi';
+
+    final careText = config.careTextTranslations[key] ??
+        config.careTextTranslations['English'] ??
+        'Here\'s your daily dose of breast care!';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4F4),
-        borderRadius: BorderRadius.circular(16),
+        color: _parseHexColor(config.backgroundColor),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
+            blurRadius: 8.r,
             offset: const Offset(0, 2),
           ),
         ],
@@ -430,21 +688,21 @@ class _WelcomeBannerState extends State<_WelcomeBanner> {
                   children: [
                     Text(
                       greetingText,
-                      style: const TextStyle(
-                        fontSize: 15,
+                      style: TextStyle(
+                        fontSize: 15.sp,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF333333),
+                        color: const Color(0xFF333333),
                       ),
                     ),
-                    const Text('👋', style: TextStyle(fontSize: 14)),
+                    Text(config.emoji, style: TextStyle(fontSize: 14.sp)),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Text(
                   careText,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888888),
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: const Color(0xFF888888),
                   ),
                 ),
               ],
@@ -454,19 +712,25 @@ class _WelcomeBannerState extends State<_WelcomeBanner> {
             children: [
               GestureDetector(
                 onTap: () {
-                  setState(() => _isFavorite = !_isFavorite);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => DiscoverPage()),
+                  );
                 },
                 child: Icon(
-                  _isFavorite ? Icons.star : Icons.star_border,
-                  color: _isFavorite ? const Color(0xFFF68AA8) : const Color(0xFF888888),
-                  size: 22,
+                  Icons.star_border,
+                  color: const Color(0xFF888888),
+                  size: 22.r,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               GestureDetector(
-                onTap: widget.onLanguageTap,
-                child: const Icon(Icons.language,
-                    color: Color(0xFF888888), size: 22),
+                onTap: onLanguageTap,
+                child: Icon(
+                  Icons.language,
+                  color: const Color(0xFF888888),
+                  size: 22.r,
+                ),
               ),
             ],
           ),
@@ -474,14 +738,28 @@ class _WelcomeBannerState extends State<_WelcomeBanner> {
       ),
     );
   }
+
+  Color _parseHexColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xff')));
+    } catch (_) {
+      return const Color(0xFFFFF4F4);
+    }
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
 // Quiz Card
 // ────────────────────────────────────────────────────────────────────────────
+
 class _QuizCard extends StatefulWidget {
+  final QuizCardConfig config;
   final String language;
-  const _QuizCard({required this.language});
+
+  const _QuizCard({
+    required this.config,
+    required this.language,
+  });
 
   @override
   State<_QuizCard> createState() => _QuizCardState();
@@ -490,7 +768,6 @@ class _QuizCard extends StatefulWidget {
 class _QuizCardState extends State<_QuizCard> {
   QuizProgress? _quizProgress;
   bool _isLoading = true;
-  static const int _quizId = 1;
 
   @override
   void initState() {
@@ -499,7 +776,7 @@ class _QuizCardState extends State<_QuizCard> {
   }
 
   Future<void> _loadQuizProgress() async {
-    final progress = await QuizService.getQuizProgress(_quizId);
+    final progress = await QuizService.getQuizProgress(widget.config.quizId);
     if (mounted) {
       setState(() {
         _quizProgress = progress;
@@ -510,28 +787,48 @@ class _QuizCardState extends State<_QuizCard> {
 
   @override
   Widget build(BuildContext context) {
-    final quizTitle = LanguageStrings.getTranslation(widget.language, 'self_examine_card_title');
-    final quizDesc  = LanguageStrings.getTranslation(widget.language, 'self_examine_subtitle');
-    final startBtn  = LanguageStrings.getTranslation(widget.language, 'get_started');
-    final completeText = LanguageStrings.getTranslation(widget.language, 'quiz_complete');
-    final questionsText = LanguageStrings.getTranslation(widget.language, 'questions_answered');
+    final key = widget.language == 'Urdu' ? 'اردو' : widget.language;
 
-    final progressPercentage = _isLoading 
-        ? 0 
+    final quizTitle = widget.config.titleTranslations[key] ??
+        widget.config.titleTranslations['English'] ??
+        'How to self-examine?';
+
+    final quizDesc = widget.config.subtitleTranslations[key] ??
+        widget.config.subtitleTranslations['English'] ??
+        'Understanding the basics in 3 min';
+
+    final startBtn = widget.config.getStartedTranslations[key] ??
+        widget.config.getStartedTranslations['English'] ??
+        'Get Started';
+
+    final completeText = widget.config.quizCompleteTranslations[key] ??
+        widget.config.quizCompleteTranslations['English'] ??
+        'Quiz completed! Retake to improve your score.';
+
+    final questionsText = widget.config.questionsAnsweredTranslations[key] ??
+        widget.config.questionsAnsweredTranslations['English'] ??
+        'questions answered';
+
+    final progressPercentage = _isLoading
+        ? 0
         : (_quizProgress?.progressPercentage.toStringAsFixed(0) ?? '0');
 
     final isCompleted = _quizProgress?.isCompleted ?? false;
-    final buttonText = isCompleted ? startBtn : ((_quizProgress != null && _quizProgress!.questionsCompleted > 0) ? 'Resume' : startBtn);
+    final buttonText = isCompleted
+        ? startBtn
+        : ((_quizProgress != null && _quizProgress!.questionsCompleted > 0)
+            ? 'Resume'
+            : startBtn);
 
-    void _navigateToQuiz() {
+    void navigateToQuiz() {
       if (isCompleted) {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => QuizCompletionPage(
-              quizId: 1,
+              quizId: widget.config.quizId,
               completedQuestions: _quizProgress?.questionsCompleted ?? 0,
-              totalQuestions: _quizProgress?.totalQuestions ?? 6,
+              totalQuestions: _quizProgress?.totalQuestions ?? widget.config.totalQuestions,
             ),
           ),
         ).then((_) => _loadQuizProgress());
@@ -544,11 +841,11 @@ class _QuizCardState extends State<_QuizCard> {
     }
 
     return GestureDetector(
-      onTap: _navigateToQuiz,
+      onTap: navigateToQuiz,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           gradient: const RadialGradient(
             center: Alignment.center,
             radius: 1.2,
@@ -558,82 +855,97 @@ class _QuizCardState extends State<_QuizCard> {
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 52.r,
+              height: 52.r,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white24,
               ),
               child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Image.asset('assets/images/timer.png', fit: BoxFit.contain),
+                padding: EdgeInsets.all(10.r),
+                child: Image.asset(
+                  'assets/images/timer.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-
-            const SizedBox(width: 12),
-
+            SizedBox(width: 12.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     quizTitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                      fontSize: 14.sp,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2.h),
                   RichText(
                     text: TextSpan(
                       children: [
                         TextSpan(
                           text: '$progressPercentage% ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 20,
+                            fontSize: 20.sp,
                             color: Colors.white,
                           ),
                         ),
                         TextSpan(
                           text: 'complete',
-                          style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.white70,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2.h),
                   if (_quizProgress != null && !isCompleted)
                     Text(
                       '${_quizProgress!.questionsCompleted}/${_quizProgress!.totalQuestions} $questionsText',
-                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.white70,
+                      ),
                     )
                   else if (isCompleted)
                     Text(
                       completeText,
-                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.white70,
+                      ),
                     )
                   else
                     Text(
                       quizDesc,
-                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.white70,
+                      ),
                     ),
                 ],
               ),
             ),
-
             ElevatedButton(
-              onPressed: _navigateToQuiz,
+              onPressed: navigateToQuiz,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFFFF7198),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                textStyle: const TextStyle(
-                  fontSize: 12,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 14.w,
+                  vertical: 8.h,
+                ),
+                textStyle: TextStyle(
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                 ),
                 elevation: 0,
@@ -642,8 +954,8 @@ class _QuizCardState extends State<_QuizCard> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(buttonText),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward, size: 14),
+                  SizedBox(width: 4.w),
+                  Icon(Icons.arrow_forward, size: 14.r),
                 ],
               ),
             ),
@@ -655,189 +967,97 @@ class _QuizCardState extends State<_QuizCard> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Video Card Data Model
+// Video Card from Firebase
 // ────────────────────────────────────────────────────────────────────────────
-class VideoCardData {
-  final String title;
-  final String subtitle;
-  final String duration;
-  final String imagePlaceholder;
-  final Color? accentColor;
-  final String? titleKey;
-  final String? subtitleKey;
-  final AudioContent audioContent;
 
-  const VideoCardData({
-    required this.title,
-    required this.subtitle,
-    required this.duration,
-    required this.imagePlaceholder,
-    required this.audioContent,
-    this.accentColor,
-    this.titleKey,
-    this.subtitleKey,
-  });
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// Video Card Widget
-// ────────────────────────────────────────────────────────────────────────────
-class _VideoCard extends StatefulWidget {
-  final VideoCardData data;
+class _VideoCardFromFirebase extends StatelessWidget {
+  final VideoCardFirebaseData data;
   final String language;
-  const _VideoCard({required this.data, required this.language});
 
-  @override
-  State<_VideoCard> createState() => _VideoCardState();
-}
-
-class _VideoCardState extends State<_VideoCard> {
-  bool _isFavorite = false;
+  const _VideoCardFromFirebase({
+    required this.data,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.data.titleKey != null
-        ? LanguageStrings.getTranslation(widget.language, widget.data.titleKey!)
-            .replaceAll('[b]', '')
-            .replaceAll('[/b]', '')
-        : widget.data.title;
+    final key = language == 'Urdu' ? 'اردو' : language;
 
-    final subtitle = widget.data.subtitleKey != null
-        ? LanguageStrings.getTranslation(widget.language, widget.data.subtitleKey!)
-        : widget.data.subtitle;
+    debugPrint('🎬 _VideoCardFromFirebase for card: ${data.id}');
+    debugPrint('   Language: $language, Key: $key');
+    debugPrint('   Title translations available: ${data.titleTranslations.keys.toList()}');
+    debugPrint('   Title translations: ${data.titleTranslations}');
+    debugPrint('   Subtitle translations available: ${data.subtitleTranslations.keys.toList()}');
+    debugPrint('   Subtitle translations: ${data.subtitleTranslations}');
 
-    final watchNow =
-        LanguageStrings.getTranslation(widget.language, 'watch_now');
+    final title = data.titleTranslations[key] ??
+        data.titleTranslations['English'] ??
+        data.titleKey;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Stack(
-              children: [
-                Image.asset(
-                  'assets/images/${widget.data.imagePlaceholder}',
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.55),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.play_circle_fill,
-                            color: Colors.white, size: 12),
-                        const SizedBox(width: 3),
-                        Text(widget.data.duration,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: Color(0xFF222222)),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF888888)),
-                      ),
-                      const SizedBox(height: 10),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AudioPlayerPage(
-                                audioContent: widget.data.audioContent,
-                                  allContent: allAudioContent,
+    final subtitle = data.subtitleTranslations[key] ??
+        data.subtitleTranslations['English'] ??
+        data.subtitleKey;
 
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF4A7B9).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: const Color(0xFFFFB2C7), width: 1.2),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(watchNow,
-                                  style: const TextStyle(
-                                      color: Color(0xFFE86A8D),
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 12)),
-                              const SizedBox(width: 2),
-                              const Icon(Icons.chevron_right,
-                                  size: 14, color: Color(0xFFE86A8D)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _isFavorite = !_isFavorite);
-                  },
-                  child: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    size: 22,
-                    color: _isFavorite ? const Color(0xFFF68AA8) : const Color(0xFF8B5E3C),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    debugPrint('   Final title: $title');
+    debugPrint('   Final subtitle: $subtitle');
+
+    // Map Firebase data to AudioContent
+    final audioContent = _getAudioContent(data.audioContentId);
+
+    final videoCardData = VideoCardData(
+      title: title,
+      subtitle: subtitle,
+      videoUrl: data.videoUrl.isEmpty ? null : data.videoUrl,
+      duration: data.duration,
+      imagePlaceholder: _extractFileName(data.thumbnail),
+      remoteImageUrl: data.thumbnail,
+      audioContent: audioContent,
+      accentColor: _parseHexColor(data.accentColor),
+      titleKey: data.titleKey,
+      subtitleKey: data.subtitleKey,
+      favoriteId: data.favoriteId,
     );
+
+    return VideoCard(
+      data: videoCardData,
+      language: language,
+    );
+  }
+
+  AudioContent? _getAudioContent(String contentId) {
+    // Map contentId to the corresponding AudioContent
+    switch (contentId) {
+      case 'audio_content_1':
+        return audioContent1;
+      case 'audio_content_2':
+        return audioContent2;
+      case 'audio_content_3':
+        return audioContent3;
+      case 'audio_content_4':
+        return audioContent4;
+      case 'audio_content_5':
+        return audioContent5;
+      case 'audio_content_6':
+        return audioContent6;
+      case 'audio_content_7':
+        return audioContent7;
+      default:
+        return null;
+    }
+  }
+
+  String _extractFileName(String url) {
+    // Extract filename from Firebase Storage URL
+    // e.g., "gs://bucket/images/whatIsIt.png" -> "whatIsIt.png"
+    final parts = url.split('/');
+    return parts.isNotEmpty ? parts.last : '';
+  }
+
+  Color _parseHexColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xff')));
+    } catch (_) {
+      return const Color(0xFFE91E8C);
+    }
   }
 }

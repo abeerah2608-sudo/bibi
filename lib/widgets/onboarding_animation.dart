@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:dotlottie_loader/dotlottie_loader.dart';
+import '../services/remote_asset_service.dart';
 
 class OnboardingAnimation extends StatefulWidget {
   final String assetPath;
@@ -31,10 +32,72 @@ class OnboardingAnimation extends StatefulWidget {
 }
 
 class _OnboardingAnimationState extends State<OnboardingAnimation> {
+  String? _lastLoggedSuccessAssetPath;
+  String? _resolvedRemoteUrl;
+
+  String get _firebaseUrl {
+    return RemoteAssetService.convertGsUrlToHttps(widget.assetPath);
+  }
+
   @override
   void initState() {
     super.initState();
-    debugPrint('🎬 Loading animation: ${widget.assetPath}');
+    debugPrint('🎬 [${widget.key}] Loading animation: ${widget.assetPath}');
+    _refreshResolvedUrl();
+  }
+
+  @override
+  void didUpdateWidget(OnboardingAnimation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.assetPath != widget.assetPath || oldWidget.key != widget.key) {
+      debugPrint('🔄 [${widget.key}] Animation changed: ${oldWidget.assetPath} -> ${widget.assetPath}');
+      _lastLoggedSuccessAssetPath = null; // Reset log tracking
+      _refreshResolvedUrl();
+    }
+  }
+
+  Future<void> _refreshResolvedUrl() async {
+    if (widget.assetPath.startsWith('assets/')) {
+      if (mounted) {
+        setState(() {
+          _resolvedRemoteUrl = null;
+        });
+      }
+      return;
+    }
+
+    final fallback = _firebaseUrl;
+    if (mounted) {
+      setState(() {
+        _resolvedRemoteUrl = fallback;
+      });
+    }
+
+    final resolved = await RemoteAssetService.resolveDownloadUrl(widget.assetPath);
+    if (!mounted || resolved.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _resolvedRemoteUrl = resolved;
+    });
+  }
+
+  @override
+  void deactivate() {
+    debugPrint('❌ [${widget.key}] Animation disposed/deactivated');
+    super.deactivate();
+  }
+
+  void _logSuccessfulFetchOnce() {
+    if (_lastLoggedSuccessAssetPath == widget.assetPath) {
+      return;
+    }
+
+    _lastLoggedSuccessAssetPath = widget.assetPath;
+    debugPrint(
+      '✅ [${widget.key}] Successfully fetched animation: ${widget.assetPath}',
+    );
   }
 
   @override
@@ -46,6 +109,8 @@ Widget build(BuildContext context) {
 
   final baseW = screenWidth * 0.5;
   final baseH = screenHeight * 0.6;
+
+  final isLocalAsset = widget.assetPath.startsWith('assets/');
 
   return RepaintBoundary(
     child: Transform.translate(
@@ -60,42 +125,83 @@ Widget build(BuildContext context) {
           child: SizedBox(
             width: baseW,
             height: baseH,
-            child: DotLottieLoader.fromAsset(
-              widget.assetPath,
-              frameBuilder: (context, dotLottie) {
-                if (dotLottie == null) {
-                  return const Center(
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                }
+            child: isLocalAsset
+                ? DotLottieLoader.fromAsset(
+                    widget.assetPath,
+                    frameBuilder: (context, dotLottie) {
+                      if (dotLottie == null) {
+                        return const Center(
+                          child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      }
 
-                if (dotLottie.animations.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+                      if (dotLottie.animations.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
 
-                return Lottie.memory(
-                  dotLottie.animations.values.first,
-                  fit: BoxFit.contain,
-                  alignment: Alignment.center,
-                  repeat: widget.repeat,
-                  animate: true,
-                  imageProviderFactory: (asset) {
-                    if (dotLottie.images.containsKey(asset.fileName)) {
-                      return MemoryImage(dotLottie.images[asset.fileName]!);
-                    }
-                    return null;
-                  },
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                debugPrint('❌ Lottie error: $error');
-                return const SizedBox.shrink();
-              },
-            ),
+                      _logSuccessfulFetchOnce();
+
+                      return Lottie.memory(
+                        dotLottie.animations.values.first,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.center,
+                        repeat: widget.repeat,
+                        animate: true,
+                        imageProviderFactory: (asset) {
+                          if (dotLottie.images.containsKey(asset.fileName)) {
+                            return MemoryImage(dotLottie.images[asset.fileName]!);
+                          }
+                          return null;
+                        },
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('❌ Lottie local asset error: $error');
+                      return const SizedBox.shrink();
+                    },
+                  )
+                : DotLottieLoader.fromNetwork(
+                    _resolvedRemoteUrl ?? _firebaseUrl,
+                    frameBuilder: (context, dotLottie) {
+                      if (dotLottie == null) {
+                        return const Center(
+                          child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      }
+
+                      if (dotLottie.animations.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      _logSuccessfulFetchOnce();
+
+                      return Lottie.memory(
+                        dotLottie.animations.values.first,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.center,
+                        repeat: widget.repeat,
+                        animate: true,
+                        imageProviderFactory: (asset) {
+                          if (dotLottie.images.containsKey(asset.fileName)) {
+                            return MemoryImage(dotLottie.images[asset.fileName]!);
+                          }
+                          return null;
+                        },
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('❌ Lottie network error: $error');
+                      return const SizedBox.shrink();
+                    },
+                  ),
           ),
         ),
       ),

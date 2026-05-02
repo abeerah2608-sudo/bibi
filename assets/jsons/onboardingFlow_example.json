@@ -1,0 +1,423 @@
+{
+  "schemaVersion": "2.0.0",
+  "assets": {
+    "images": {
+      "onboarding_5": "gs://bibi-app-d41a0.firebasestorage.app/images/Bibi_Onboarding_Leftt.lottie",
+      "onboarding_6": "gs://bibi-app-d41a0.firebasestorage.app/images/Bibi_Onboarding_Right.lottie",
+      "mammogram": "gs://bibi-app-d41a0.firebasestorage.app/images/mammogram.lottie",
+      "ultrasound": "gs://bibi-app-d41a0.firebasestorage.app/images/ultrasound.lottie",
+      "cancer_cell": "gs://bibi-app-d41a0.firebasestorage.app/images/Cancer%20Cell%20Animation%20from%20Bibi%20Project%20(1).lottie",
+      "family_tree": "gs://bibi-app-d41a0.firebasestorage.app/images/family_tree.lottie",
+      "chemotherapy": "gs://bibi-app-d41a0.firebasestorage.app/images/chemotherapy.lottie"
+    },
+    "audio": {
+      "intro_en": "gs://bibi-app-d41a0.firebasestorage.app/audio/intro_en.mp3",
+      "intro_ur": "gs://bibi-app-d41a0.firebasestorage.app/audio/intro_ur.mp3",
+      "intro_ru": "gs://bibi-app-d41a0.firebasestorage.app/audio/intro_ru.mp3"
+    },
+    "animations": {
+      "splash": "assets/images/splash.lottie"
+    }
+  },
+  "styleTokens": {
+    "textStyles": {
+      "heading": {
+        "fontSize": 28,
+        "fontWeight": "w700",
+        "color": "#8B5E3C",
+        "fontFamily": "Inter",
+        "textAlign": "center"
+      },
+      "subheading": {
+        "fontSize": 18,
+        "fontWeight": "w600",
+        "color": "#8B5E3C",
+        "fontFamily": "Inter",
+        "textAlign": "center"
+      },
+      "body": {
+        "fontSize": 16,
+        "fontWeight": "w500",
+        "color": "#5F5F5F",
+        "fontFamily": "Inter",
+        "textAlign": "left"
+      },
+      "button": {
+        "fontSize": 16,
+        "fontWeight": "w600",
+        "color": "#FFFFFF",
+        "fontFamily": "Inter",
+        "textAlign": "center"
+      }
+    }
+  },
+  "pages": [
+    {
+      "id": "page_1",
+      "order": 0,
+      "background": {
+        "type": "gradient",
+        "colors": ["#F5E6D3", "#FDEDDC"],
+        "begin": "top_center",
+        "end": "bottom_center"
+      },
+      "layout": {
+        "type": "column",
+        "gap": 24,
+        "mainAxisAlignment": "space_between",
+        "crossAxisAlignment": "center",
+        "padding": {
+          "all": 24
+        }
+      },
+      "components": [
+        {
+          "id": "spacer_top",
+          "type": "spacer",
+          "size": {
+            "height": 40
+          }
+        },
+        {
+          "id": "lottie_animation",
+          "type": "lottie",
+          "assetKey": "onboarding_5",
+          "behavior": {
+            "autoPlay": true,
+            "loop": true
+          },
+          "position": {
+            "alignment": "center",
+            "width": 280,
+            "height": 280
+          }
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "content": {
+            "translations": {
+              "English": "Welcome to Bibi",
+              "اردو": "بیبی میں خوش آمدید",
+              "Roman Urdu": "Bibi mein khosh amdeed"
+            }
+          },
+          "styleRef": "heading",
+          "position": {
+            "alignment": "center",
+            "padding": {
+              "horizontal": 16
+            }
+          }
+        },
+        {
+          "id": "description",
+          "type": "text",
+          "content": {
+            "translations": {
+              "English": "Your trusted companion for cancer awareness and support",
+              "اردو": "کینسر کی شعور اور معاونت کے لیے آپ کا قابلِ اعتماد ساتھی",
+              "Roman Urdu": "Cancer ki shaoor aur muawwanit ke liye aapka qaabil-i-itamad sathi"
+            }
+          },
+          "styleRef": "body",
+          "position": {
+            "alignment": "center",
+            "padding": {
+              "horizontal": 16
+            }
+          }
+        },
+        {
+          "id": "spacer_bottom",
+          "type": "spacer",
+          "size": {
+            "height": 60
+          }
+        },
+        {
+          "id": "next_button",
+          "type": "button",
+          "label": {
+            "translations": {
+              "English": "Get Started",
+              "اردو": "شروع کریں",
+              "Roman Urdu": "Shuru Karen"
+            }
+          },
+          "action": {
+            "type": "navigate",
+            "target": "next_page"
+          },
+          "position": {
+            "alignment": "center_bottom",
+            "width": 250,
+            "height": 50,
+            "margin": {
+              "bottom": 20
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "page_2",
+      "order": 1,
+      "background": {
+        "type": "gradient",
+        "colors": ["#F5E6D3", "#FDEDDC"],
+        "begin": "top_center",
+        "end": "bottom_center"
+      },
+      "layout": {
+        "type": "column",
+        "gap": 24,
+        "mainAxisAlignment": "space_between",
+        "crossAxisAlignment": "center",
+        "padding": {
+          "all": 24
+        }
+      },
+      "components": [
+        {
+          "id": "title",
+          "type": "text",
+          "content": {
+            "translations": {
+              "English": "Understanding Breast Cancer",
+              "اردو": "سینے کے کینسر کو سمجھنا",
+              "Roman Urdu": "Sene ke cancer ko samjhna"
+            }
+          },
+          "styleRef": "heading",
+          "position": {
+            "alignment": "center",
+            "padding": {
+              "horizontal": 16,
+              "top": 40
+            }
+          }
+        },
+        {
+          "id": "mammogram_img",
+          "type": "lottie",
+          "assetKey": "mammogram",
+          "behavior": {
+            "autoPlay": true,
+            "loop": true
+          },
+          "position": {
+            "alignment": "center",
+            "width": 240,
+            "height": 240
+          }
+        },
+        {
+          "id": "content_card",
+          "type": "card",
+          "content": {
+            "translations": {
+              "English": "[b]Early Detection[/b] Saves Lives\n\nRegular screening and awareness can detect breast cancer early, when treatment is most effective.",
+              "اردو": "[b]جلد شناخت[/b] زندگیاں بچاتی ہے\n\nباقاعدہ اسکریننگ اور شعور سے سینے کے کینسر کی جلد شناخت ممکن ہے۔",
+              "Roman Urdu": "[b]Jald Shanaakht[/b] Zindagiyaan Bachati Hain\n\nBaqa'idah screening aur shuoor se sene ke cancer ki jald shanaakht mumkin hai."
+            }
+          },
+          "position": {
+            "alignment": "center",
+            "padding": {
+              "all": 16,
+              "horizontal": 12
+            },
+            "width": 300,
+            "margin": {
+              "horizontal": 12
+            }
+          }
+        },
+        {
+          "id": "spacer",
+          "type": "spacer",
+          "size": {
+            "height": 40
+          }
+        },
+        {
+          "id": "nav_buttons",
+          "type": "collection",
+          "items": [
+            {
+              "id": "prev_btn",
+              "type": "button",
+              "label": {
+                "translations": {
+                  "English": "← Previous",
+                  "اردو": "← پچھلا",
+                  "Roman Urdu": "← Pichla"
+                }
+              },
+              "action": {
+                "type": "navigate",
+                "target": "previous_page"
+              }
+            },
+            {
+              "id": "next_btn",
+              "type": "button",
+              "label": {
+                "translations": {
+                  "English": "Next →",
+                  "اردو": "اگلا →",
+                  "Roman Urdu": "Agla →"
+                }
+              },
+              "action": {
+                "type": "navigate",
+                "target": "next_page"
+              }
+            }
+          ],
+          "viewType": "row",
+          "position": {
+            "alignment": "center_bottom",
+            "padding": {
+              "bottom": 20,
+              "horizontal": 16
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "page_3",
+      "order": 2,
+      "background": {
+        "type": "gradient",
+        "colors": ["#F5E6D3", "#FDEDDC"],
+        "begin": "top_center",
+        "end": "bottom_center"
+      },
+      "layout": {
+        "type": "column",
+        "gap": 20,
+        "mainAxisAlignment": "space_between",
+        "crossAxisAlignment": "center",
+        "padding": {
+          "all": 24
+        }
+      },
+      "components": [
+        {
+          "id": "title",
+          "type": "text",
+          "content": {
+            "translations": {
+              "English": "Signs & Symptoms",
+              "اردو": "علامات",
+              "Roman Urdu": "Alamat"
+            }
+          },
+          "styleRef": "heading",
+          "position": {
+            "alignment": "center",
+            "padding": {
+              "top": 30
+            }
+          }
+        },
+        {
+          "id": "ultrasound_img",
+          "type": "lottie",
+          "assetKey": "ultrasound",
+          "behavior": {
+            "autoPlay": true,
+            "loop": true
+          },
+          "position": {
+            "alignment": "center",
+            "width": 220,
+            "height": 220
+          }
+        },
+        {
+          "id": "symptoms_list",
+          "type": "collection",
+          "items": [
+            {
+              "id": "symptom_1",
+              "type": "text",
+              "content": {
+                "translations": {
+                  "English": "• Lump or thickening in breast",
+                  "اردو": "• سینے میں گانٹھ",
+                  "Roman Urdu": "• Sene mein ganth"
+                }
+              },
+              "styleRef": "body"
+            },
+            {
+              "id": "symptom_2",
+              "type": "text",
+              "content": {
+                "translations": {
+                  "English": "• Nipple discharge",
+                  "اردو": "• سفید یا خونی رطوبت",
+                  "Roman Urdu": "• Safed ya khuni ratubat"
+                }
+              },
+              "styleRef": "body"
+            },
+            {
+              "id": "symptom_3",
+              "type": "text",
+              "content": {
+                "translations": {
+                  "English": "• Breast pain or swelling",
+                  "اردو": "• سینے میں درد یا سوجن",
+                  "Roman Urdu": "• Sene mein dard ya sojan"
+                }
+              },
+              "styleRef": "body"
+            }
+          ],
+          "viewType": "column",
+          "position": {
+            "alignment": "center",
+            "padding": {
+              "horizontal": 16
+            }
+          }
+        },
+        {
+          "id": "spacer",
+          "type": "spacer",
+          "size": {
+            "height": 30
+          }
+        },
+        {
+          "id": "cta_button",
+          "type": "button",
+          "label": {
+            "translations": {
+              "English": "Continue",
+              "اردو": "جاری رکھیں",
+              "Roman Urdu": "Jari rakhen"
+            }
+          },
+          "action": {
+            "type": "navigate",
+            "target": "next_page"
+          },
+          "position": {
+            "alignment": "center_bottom",
+            "width": 250,
+            "height": 50,
+            "margin": {
+              "bottom": 20
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

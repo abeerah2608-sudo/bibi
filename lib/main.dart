@@ -2,39 +2,56 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'bloc/bloc_exports.dart';
 import 'pages/languageSelection.dart';
-import 'pages/dashboard.dart';
 import 'pages/splashScreen.dart';
-import 'services/animation_cache_service.dart';
+import 'services/animation_cache_service.dart' hide debugPrint;
+import 'services/language_strings.dart';
 import 'services/onboarding_service.dart';
+import 'services/dynamic_content_service.dart';
+import 'pages/onboarding_flow_dynamic.dart';
+import 'pages/dashboard.dart';
+import 'services/app_route_observer.dart';
 
 Future<void> main() async {
-  // Optimize Flutter for Impeller GPU rendering engine
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint("🚀 App initialization started");
 
-  // Keep native splash screen visible while loading
+  // Initialize Firebase
+  debugPrint("🔥 Initializing Firebase...");
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  debugPrint("✅ Firebase initialized");
+
   FlutterNativeSplash.preserve(widgetsBinding: WidgetsBinding.instance);
 
-  // Enable Impeller-specific optimizations
   _preloadAnimations();
 
-  // Check if onboarding has been completed
   final hasCompletedOnboarding =
       await OnboardingService.hasCompletedOnboarding();
+  debugPrint("📋 OnboardingService: hasCompletedOnboarding=$hasCompletedOnboarding");
 
-  // Dismiss native splash screen after app is ready
   FlutterNativeSplash.remove();
 
+  debugPrint("🎮 Running MainApp...");
   runApp(MainApp(hasCompletedOnboarding: hasCompletedOnboarding));
 }
 
 /// Pre-load commonly used Lottie animations with GPU caching
 void _preloadAnimations() {
   AnimationCacheService().preloadAnimations([
-    'assets/images/Bibi_Onboarding_Leftt.lottie',
-    'assets/images/Bibi_Onboarding_Right.lottie',
+    'gs://bibi-app-d41a0.firebasestorage.app/animations/Bibi_Onboarding_Leftt.lottie',
+    'gs://bibi-app-d41a0.firebasestorage.app/animations/Bibi_Onboarding_Right.lottie',
+    'assets/images/Cancer Cell Animation from Bibi Project (1).lottie',
+    'assets/images/family_tree.lottie',
+    'assets/images/ultrasound.lottie',
+    'assets/images/chemotherapy.lottie',
+    'assets/images/mammogram.lottie',
+    'gs://bibi-app-d41a0.firebasestorage.app/animations/Cancer Cell Animation from Bibi Project (1).lottie',
   ]);
 }
 
@@ -42,32 +59,58 @@ class MainApp extends StatelessWidget {
   final bool hasCompletedOnboarding;
 
   const MainApp({super.key, required this.hasCompletedOnboarding});
-
+  
   @override
   Widget build(BuildContext context) {
-    // ✅ In debug mode, always show onboarding
-    final showOnboarding = kDebugMode ? true : !hasCompletedOnboarding;
-
-    return BlocProvider(
-      create: (context) => LanguageBloc(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          fontFamily: 'DM Sans',
-          useMaterial3: true,
-        ),
-        home: showOnboarding
-            ? SplashScreen(hasCompletedOnboarding: false) // ✅ Always show splash in debug
-            : const DashboardScreen(), // ✅ Skip to dashboard in production
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              boldText: false,
-            ),
-            child: child!,
-          );
-        },
-      ),
-    );
-  }
+    debugPrint("🎨 MainApp widget building - hasCompletedOnboarding=$hasCompletedOnboarding");
+    
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) {
+          debugPrint("🔧 Creating LanguageBloc");
+          return LanguageBloc();
+        }),
+        BlocProvider(create: (context) {
+          debugPrint("🔧 Creating OnboardingBloc");
+          return OnboardingBloc();
+        }),
+        BlocProvider(create: (context) {
+          debugPrint("🔧 Creating DashboardBloc");
+          return DashboardBloc();
+        }),
+        BlocProvider(create: (_) {
+          debugPrint("🔧 Creating FavoritesBloc");
+          return FavoritesBloc();
+        }),
+        BlocProvider(create: (_) {
+          debugPrint("🔧 Creating QuizBloc");
+          return QuizBloc();
+        }),
+      ],
+    child: ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          navigatorObservers: [appRouteObserver],
+          theme: ThemeData(
+            fontFamily: 'Inter',
+            useMaterial3: true,
+          ),
+          home: SplashScreen(
+            hasCompletedOnboarding: kDebugMode ? false : hasCompletedOnboarding,
+          ),
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(boldText: false),
+              child: child!,
+            );
+          },
+        );
+      },
+    ),
+  );
+}
 }

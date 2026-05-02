@@ -51,7 +51,8 @@ class QuizService {
     final prefs = await SharedPreferences.getInstance();
     final key = '${_prefix}progress_$quizId';
 
-    if (!prefs.containsKey(key)) {
+    final existingData = prefs.getString(key);
+    if (existingData == null) {
       final progress = QuizProgress(
         quizId: quizId,
         currentQuestion: 0,
@@ -62,7 +63,32 @@ class QuizService {
       );
 
       await prefs.setString(key, jsonEncode(progress.toJson()));
+      return;
     }
+
+    final progress = QuizProgress.fromJson(jsonDecode(existingData));
+    if (progress.totalQuestions == totalQuestions && progress.answers.length == totalQuestions) {
+      return;
+    }
+
+    final resizedAnswers = List<String?>.filled(totalQuestions, null);
+    final copyLength = progress.answers.length < totalQuestions
+        ? progress.answers.length
+        : totalQuestions;
+    for (var i = 0; i < copyLength; i++) {
+      resizedAnswers[i] = progress.answers[i];
+    }
+
+    final updated = QuizProgress(
+      quizId: quizId,
+      currentQuestion: progress.currentQuestion.clamp(0, totalQuestions == 0 ? 0 : totalQuestions - 1),
+      totalQuestions: totalQuestions,
+      answers: resizedAnswers,
+      isCompleted: progress.isCompleted,
+      lastAccessedTime: DateTime.now(),
+    );
+
+    await prefs.setString(key, jsonEncode(updated.toJson()));
   }
 
   static Future<QuizProgress?> getQuizProgress(int quizId) async {
@@ -82,9 +108,26 @@ class QuizService {
 
     if (data != null) {
       final progress = QuizProgress.fromJson(jsonDecode(data));
-      progress.answers[questionIndex] = answer;
+      final updatedAnswers = List<String?>.from(progress.answers);
 
-      await prefs.setString(key, jsonEncode(progress.toJson()));
+      if (questionIndex >= updatedAnswers.length) {
+        updatedAnswers.length = questionIndex + 1;
+      }
+
+      updatedAnswers[questionIndex] = answer;
+
+      final updated = QuizProgress(
+        quizId: progress.quizId,
+        currentQuestion: progress.currentQuestion,
+        totalQuestions: progress.totalQuestions > updatedAnswers.length
+            ? progress.totalQuestions
+            : updatedAnswers.length,
+        answers: updatedAnswers,
+        isCompleted: progress.isCompleted,
+        lastAccessedTime: DateTime.now(),
+      );
+
+      await prefs.setString(key, jsonEncode(updated.toJson()));
     }
   }
 

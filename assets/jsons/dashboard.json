@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "2.0.0",
+  "metadata": {
+    "version": "2.0.0",
+    "sourceFile": "dashboard.json",
+    "convertedOn": "2026-04-30",
+    "notes": "Component-based dashboard configuration"
+  },
+  "assets": {
+    "images": {
+      "Bibi_Logo_Vector_1.png": "gs://bibi-app-d41a0.firebasestorage.app/images/Bibi_Logo_Vector_1.png",
+      "timer.png": "gs://bibi-app-d41a0.firebasestorage.app/images/timer.png",
+      "whatIsIt.png": "gs://bibi-app-d41a0.firebasestorage.app/images/whatIsIt.png",
+      "risk.png": "gs://bibi-app-d41a0.firebasestorage.app/images/risk.png",
+      "mammogram.jpg": "gs://bibi-app-d41a0.firebasestorage.app/images/mammogram.jpg",
+      "treat.jpg": "gs://bibi-app-d41a0.firebasestorage.app/images/treat.jpg",
+      "check.jpg": "gs://bibi-app-d41a0.firebasestorage.app/images/check.jpg",
+      "prevent.jpg": "gs://bibi-app-d41a0.firebasestorage.app/images/prevent.jpg",
+      "support.jpg": "gs://bibi-app-d41a0.firebasestorage.app/images/support.jpg"
+    },
+    "audio": {
+      "what_is_breast_cancer_en.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/what_is_breast_cancer_en.mp3"
+    }
+  },
+  "styleTokens": {
+    "textStyles": {
+      "welcome_title": { "fontSize": 15, "fontWeight": "w700", "color": "#333333" },
+      "card_title": { "fontSize": 14, "fontWeight": "w700", "color": "#FFFFFF" },
+      "tab_label": { "fontSize": 14, "fontWeight": "w600", "color": "#8B5E3C" }
+    }
+  },
+  "pages": [
+    {
+      "id": "dashboard_main",
+      "type": "screen",
+      "background": { "color": "#FFF4F4" },
+      "layout": { "type": "column", "padding": { "left": 16, "right": 16, "top": 16, "bottom": 24 }, "gap": 16 },
+      "components": [
+        {
+          "id": "logo",
+          "type": "image",
+          "assetKey": "Bibi_Logo_Vector_1.png",
+          "size": { "width": 72, "height": 72 },
+          "position": { "alignment": "top_left" }
+        },
+        {
+          "id": "welcomeBanner",
+          "type": "card",
+          "cardStyle": { "backgroundColor": "#FFF4F4", "borderRadius": 16, "padding": { "horizontal": 16, "vertical": 14 }, "shadow": { "color": "#0F000000", "blur": 8, "offset": { "x": 0, "y": 2 } } },
+          "content": {
+            "emoji": "👋",
+            "greeting": {
+              "textKey": "good_morning",
+              "translations": { "English": "Good Morning, Bibi", "اردو": "صبح بخیر، بی بی", "Roman Urdu": "Subah Bakhair, Bibi" },
+              "styleRef": "welcome_title"
+            },
+            "subtext": {
+              "textKey": "breast_care",
+              "translations": { "English": "Here's your daily dose of breast care!", "اردو": "یہاں آپ کے لیے روزانہ breast care ہے!", "Roman Urdu": "Yahan aap ke liye rozana breast care hai!" },
+              "style": { "fontSize": 12, "color": "#888888" }
+            },
+            "icons": {
+              "discover": { "icon": "star_border", "action": "navigate_to_discover" },
+              "language": { "icon": "language", "action": "show_language_dialog" }
+            }
+          }
+        },
+        {
+          "id": "quizCard",
+          "type": "card",
+          "cardStyle": { "borderRadius": 16, "padding": 16, "gradient": { "type": "radial", "colors": ["#FFBACB", "#FF7198"] } },
+          "content": {
+            "icon": { "assetKey": "timer.png", "containerSize": 52 },
+            "title": { "textKey": "self_examine_card_title", "translations": { "English": "How to self-examine?" } },
+            "subtitle": { "textKey": "self_examine_subtitle", "translations": { "English": "Understanding the basics in 3 min" } },
+            "button": { "labelKey": "get_started", "action": "navigate_to_quiz_page_1" }
+          }
+        },
+        {
+          "id": "tabBar",
+          "type": "tabs",
+          "tabs": [
+            { "id": "basics", "label": { "translations": { "English": "Basics", "اردو": "بنیادی باتیں" } } },
+            { "id": "care", "label": { "translations": { "English": "Care", "اردو": "دیکھ بھال" } } },
+            { "id": "support", "label": { "translations": { "English": "Support", "اردو": "معاونت" } } }
+          ],
+          "style": { "backgroundColor": "#FFF4F4", "borderRadius": 30 }
+        },
+        {
+          "id": "videoSection",
+          "type": "collection",
+          "collectionStyle": { "layout": "grid", "columns": 2, "spacing": 12 },
+          "itemsSource": {
+            "type": "static",
+            "items": [
+              { "id": "what_is_breast_cancer", "titleKey": "cancer_cell", "duration": "0:21", "thumbnail": "whatIsIt.png" },
+              { "id": "are_you_at_risk", "titleKey": "family_tree", "duration": "0:16", "thumbnail": "risk.png" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "componentTypes": ["screen","card","image","text","tabs","collection","videoCard"]
+  }
+}

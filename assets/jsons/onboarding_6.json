@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "2.0.0",
+  "metadata": {
+    "version": "2.0.0",
+    "sourceFile": "onboarding_6.json",
+    "convertedOn": "2026-04-30",
+    "notes": "Refactored component-based pages derived from onboarding_6.json"
+  },
+  "assets": {
+    "images": {
+      "fruitsandveg.png": "gs://bibi-app-d41a0.firebasestorage.app/images/fruitsandveg.png",
+      "fish.png": "gs://bibi-app-d41a0.firebasestorage.app/images/fish.png",
+      "lentil.png": "gs://bibi-app-d41a0.firebasestorage.app/images/lentil.png",
+      "sugar.png": "gs://bibi-app-d41a0.firebasestorage.app/images/sugar.png",
+      "fluid.png": "gs://bibi-app-d41a0.firebasestorage.app/images/fluid.png",
+      "CHARACTER.png": "gs://bibi-app-d41a0.firebasestorage.app/images/CHARACTER.png",
+      "Group.png": "gs://bibi-app-d41a0.firebasestorage.app/images/Group.png",
+      "Vector.png": "gs://bibi-app-d41a0.firebasestorage.app/images/Vector.png",
+      "doctor.png": "gs://bibi-app-d41a0.firebasestorage.app/images/doctor.png",
+      "Bibi_Logo_Vector_1.png": "gs://bibi-app-d41a0.firebasestorage.app/images/Bibi_Logo_Vector_1.png"
+    },
+    "animations": {
+      "Bibi_Onboarding_Leftt.lottie": "gs://bibi-app-d41a0.firebasestorage.app/animations/Bibi_Onboarding_Leftt.lottie"
+    },
+    "audio": {
+      "onboarding_11.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11.mp3",
+      "onboarding_11_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11_urdu.mp3",
+      "onboarding_12.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_12.mp3",
+      "onboarding_12_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_12_urdu.mp3",
+      "onboarding_13.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_13.mp3",
+      "onboarding_13_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_13_urdu.mp3"
+    }
+  },
+  "styleTokens": {
+    "textStyles": {
+      "title": { "fontSize": 24, "fontWeight": "w800", "fontFamily": "Inter", "color": "#8B5E3C", "textAlign": "center" },
+      "title_large": { "fontSize": 26, "fontWeight": "w800", "fontFamily": "Inter", "color": "#8B5E3C", "textAlign": "center" },
+      "label": { "fontSize": 12, "fontWeight": "w500", "fontFamily": "Edu", "color": "#5A3E2B", "textAlign": "center" },
+      "overlay": { "fontSize": 24, "fontWeight": "w800", "fontFamily": "Inter", "color": "#8B5E3C", "textAlign": "left", "supportsRTL": true }
+    }
+  },
+  "pages": [
+    {
+      "id": "page_9",
+      "order": 8,
+      "background": { "color": "#FFF4F4" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11_urdu.mp3" },
+      "layout": { "type": "column", "alignment": "top_center", "padding": { "left": 20, "right": 20, "top": 12, "bottom": 20 }, "gap": 12 },
+      "components": [
+        { "id": "logo", "type": "image", "assetKey": "Bibi_Logo_Vector_1.png", "size": { "width": 72, "height": 72 }, "position": { "alignment": "top_center", "margin": { "top": 12, "bottom": 8 } } },
+        { "id": "title", "type": "text", "content": { "textKey": "how_to_prevent_title", "translations": { "English": "How to Prevent?", "اردو": "بچاؤ کیسے کریں؟", "Roman Urdu": "Bachao kaise karein?" } }, "styleRef": "title", "position": { "alignment": "top_center", "margin": { "top": 8, "bottom": 8 } } },
+        { "id": "food_grid", "type": "collection", "collectionStyle": { "layout": "staggered_grid", "columns": 2, "horizontalPadding": 20, "itemSpacing": 20, "topItemSpacing": 20, "animation": { "fadeInDuration": 600, "fadeInDelay": 150, "itemAnimationDuration": 550, "staggerDelay": 180, "itemStartDelay": 300, "animationCurve": "elasticOut" } }, "position": { "alignment": "center", "margin": { "top": 8 } }, "items": [
+          { "id": "item_0", "type": "card", "cardStyle": { "shape": "circle", "diameter": 112, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "fruitsandveg.png", "scaleMode": "contain" }, "label": { "textKey": "fruits", "translations": { "English": "Fruits and Vegetables", "اردو": "پھل اور سبزیاں", "Roman Urdu": "Phal aur sabziyan" }, "styleRef": "label" } }, "positionHint": { "alignment": "top_center", "originalPosition": "center_top" } },
+          { "id": "item_1", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "fish.png", "scaleMode": "contain" }, "label": { "textKey": "grill", "translations": { "English": "Eat protein\nrich food", "اردو": "گرل، بیک یا اُبلی ہوئی غذا", "Roman Urdu": "Protein se bharpur\nghaza khain" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_left", "originalPosition": "row_2_left" } },
+          { "id": "item_2", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "lentil.png", "scaleMode": "contain" }, "label": { "textKey": "lentils", "translations": { "English": "Increase intake\nof vegetables", "اردو": "دالیں، پھلیاں اور ثابت اناج", "Roman Urdu": "Dalein, phaliyan aur sabit anaj" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_right", "originalPosition": "row_2_right" } },
+          { "id": "item_3", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "sugar.png", "scaleMode": "contain" }, "label": { "textKey": "reduce_sugar", "translations": { "English": "Reduce intake of sugary\n & fried food", "اردو": "میٹھی اور تلی ہوئی غذا کم کھائیں", "Roman Urdu": "Meethi aur tali hui ghiza kam khayen" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_left", "originalPosition": "row_3_left" } },
+          { "id": "item_4", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "fluid.png", "scaleMode": "contain" }, "label": { "textKey": "water", "translations": { "English": "Plenty of water and green tea", "اردو": "زیادہ پانی اور گرین ٹی پئیں", "Roman Urdu": "Zyada pani aur green tea piyen" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_right", "originalPosition": "row_3_right" } }
+        ] }
+      ]
+    },
+    {
+      "id": "page_10",
+      "order": 9,
+      "background": { "color": "#FFF4F4" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_12.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_12_urdu.mp3" },
+      "layout": { "type": "column", "alignment": "top_center", "padding": { "left": 20, "right": 20, "top": 12, "bottom": 20 }, "gap": 12 },
+      "components": [
+        { "id": "logo", "type": "image", "assetKey": "Bibi_Logo_Vector_1.png", "size": { "width": 72, "height": 72 }, "position": { "alignment": "top_center", "margin": { "top": 12, "bottom": 8 } } },
+        { "id": "title", "type": "text", "content": { "textKey": "how_to_support_title", "translations": { "English": "How to Support?", "اردو": "کیسے مدد کریں؟", "Roman Urdu": "Madad kaise karein?" } }, "styleRef": "title_large", "position": { "alignment": "top_center", "margin": { "top": 8, "bottom": 8 } } },
+        { "id": "support_grid", "type": "collection", "collectionStyle": { "layout": "staggered_grid", "columns": 2, "horizontalPadding": 20, "itemSpacing": 20, "topItemSpacing": 20, "animation": { "fadeInDuration": 600, "fadeInDelay": 150, "itemAnimationDuration": 550, "staggerDelay": 180, "itemStartDelay": 300, "animationCurve": "elasticOut" } }, "position": { "alignment": "center", "margin": { "top": 8 } }, "items": [
+          { "id": "item_0", "type": "card", "cardStyle": { "shape": "circle", "diameter": 112, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "CHARACTER.png", "scaleMode": "contain" }, "label": { "textKey": "listen", "translations": { "English": "Listen", "اردو": "سنیں", "Roman Urdu": "Sunain" }, "styleRef": "label" } }, "positionHint": { "alignment": "top_center", "originalPosition": "center_top" } },
+          { "id": "item_1", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "fish.png", "scaleMode": "contain" }, "label": { "textKey": "meal", "translations": { "English": "Eat protein\nrich food", "اردو": "کھانا لا کر دیں", "Roman Urdu": "Khana la kar dein" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_left", "originalPosition": "row_2_left" } },
+          { "id": "item_2", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "Group.png", "scaleMode": "contain" }, "label": { "textKey": "help", "translations": { "English": "Help the patients in chores", "اردو": "مریضوں کو کام میں مدد کریں", "Roman Urdu": "Mareez ki kamon mein madad karein" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_right", "originalPosition": "row_2_right" } },
+          { "id": "item_3", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "Vector.png", "scaleMode": "contain" }, "label": { "textKey": "checkup", "translations": { "English": "Regularly get your checkup done", "اردو": "ٹیسٹ یا علاج کے اخراجات اٹھائیں", "Roman Urdu": "Test ya ilaj ke ikhrajat uthayen" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_left", "originalPosition": "row_3_left" } },
+          { "id": "item_4", "type": "card", "cardStyle": { "shape": "circle", "diameter": 104, "backgroundColor": "#F68AA8" }, "content": { "image": { "assetKey": "doctor.png", "scaleMode": "contain" }, "label": { "textKey": "doctor", "translations": { "English": "Consult a doctor regularly", "اردو": "باقاعدگی سے ڈاکٹر سے رجوع کریں", "Roman Urdu": "Baqaidgi se doctor se mashwara karein" }, "styleRef": "label" } }, "positionHint": { "alignment": "center_right", "originalPosition": "row_3_right" } }
+        ] }
+      ]
+    },
+    {
+      "id": "page_11",
+      "order": 10,
+      "background": { "color": "#FFF4F4", "gradient": { "type": "linear", "position": "bottom", "anchor": "bottom", "height": 0.20, "bottomOffset": 85, "colors": ["#00FFF4F4","#18FFF4F4","#55FFF4F4","#AAFFF4F4","#F2FFF4F4","#FFFFFFFF"], "stops": [0.0,0.2,0.42,0.64,0.84,1.0], "begin": "topCenter", "end": "bottomCenter" } },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_13.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_13_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center", "padding": { "left": 12, "right": 12, "top": 12, "bottom": 12 } },
+      "components": [
+        { "id": "left_animation", "type": "lottie", "assetKey": "Bibi_Onboarding_Leftt.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "preferredAlignment": "center_left", "scale": 3.7, "translate": { "xPercent": 0.75, "yPercent": -0.10 } }, "position": { "alignment": "center_left" } },
+        { "id": "overlay_text", "type": "text", "content": { "textKey": "hope", "translations": { "English": "Join me on this journey", "اردو": "اس سفر میں میرے\nساتھ شامل ہوں", "Roman Urdu": "Is safar mein\nmeray saath shamil hon" } }, "styleRef": "overlay", "position": { "alignment": "top_right", "offset": { "mode": "expression", "left": "50%+16", "top": 110, "right": 20 } }, "behavior": { "supportsBoldParsing": true, "animations": { "textFadeInDelay": 300, "textSlideDuration": 600, "textSlideOffset": { "x": 0, "y": 0.15 }, "textOpacityDuration": 500, "animationCurve": "easeOutCubic" } } },
+        { "id": "logo", "type": "image", "assetKey": "Bibi_Logo_Vector_1.png", "size": { "width": 72, "height": 72 }, "position": { "alignment": "top_center", "margin": { "top": 12, "bottom": 8 } }, "behavior": { "cached": true } }
+      ],
+      "navigation": { "backDestination": "page_10", "nextDestination": "dashboard", "nextAction": "complete_onboarding", "hasBack": true, "hasNext": true }
+    }
+  ],
+  "definitions": { "componentTypes": { "text": { "fields": ["content.translations", "styleRef", "position", "behavior"] }, "image": { "fields": ["assetKey", "size", "position", "behavior"] }, "lottie": { "fields": ["assetKey", "behavior", "layoutHints", "position"] }, "collection": { "fields": ["collectionStyle", "items", "position"] }, "card": { "fields": ["cardStyle", "content", "positionHint"] }, "videoCard": { "fields": ["assetKey", "metadata", "position"] } }, "positionModel": { "alignment": "one of [top_left, top_center, top_right, center_left, center, center_right, bottom_left, bottom_center, bottom_right]", "margin": { "top": "px", "right": "px", "bottom": "px", "left": "px" }, "padding": { "top": "px", "right": "px", "bottom": "px", "left": "px" }, "absolute": { "xFraction": 0.0, "yFraction": 0.0 }, "offsetExpression": "optional string preserving percent+px expressions (backend should avoid forcing client-side math)" } }
+}

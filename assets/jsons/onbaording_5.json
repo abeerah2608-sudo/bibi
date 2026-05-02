@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "2.0.0",
+  "metadata": { "version": "2.0.0", "sourceFile": "onbaording_5.json", "convertedOn": "2026-04-30", "notes": "Refactored component-based pages derived from onbaording_5.json" },
+  "assets": {
+    "animations": {
+      "Cancer_Cell_Animation.lottie": "gs://bibi-app-d41a0.firebasestorage.app/animations/Cancer_Cell_Animation.lottie",
+      "family_tree.lottie": "gs://bibi-app-d41a0.firebasestorage.app/animations/family_tree.lottie"
+    },
+    "images": {
+      "miss_bibi.png": "gs://bibi-app-d41a0.firebasestorage.app/images/miss_bibi.png",
+      "bibi1.png": "gs://bibi-app-d41a0.firebasestorage.app/images/bibi1.png"
+    },
+    "audio": {
+      "onboarding_8.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_8.mp3",
+      "onboarding_8_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_8_urdu.mp3",
+      "onboarding_9.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_9.mp3",
+      "onboarding_9_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_9_urdu.mp3",
+      "onboarding_10.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_10.mp3",
+      "onboarding_10_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_10_urdu.mp3",
+      "onboarding_11.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11.mp3",
+      "onboarding_11_urdu.mp3": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11_urdu.mp3"
+    }
+  },
+  "styleTokens": {
+    "textStyles": {
+      "overlay_center": { "fontSize": 32, "fontWeight": "w800", "fontFamily": "Inter", "color": "#8B5E3C", "textAlign": "center", "lineHeight": 1.2 },
+      "bottom_title": { "fontSize": 30, "fontWeight": "w800", "color": "#8B5E3C", "textAlign": "center" },
+      "card_title": { "fontSize": 15, "fontWeight": "w600", "color": "#8B5E3C" },
+      "card_sub": { "fontSize": 12, "fontWeight": "w400", "color": "#8B5E3C" },
+      "page_bottom": { "fontSize": 24, "fontWeight": "w800", "color": "#8B5E3C", "textAlign": "center" }
+    }
+  },
+  "pages": [
+    {
+      "id": "page_8",
+      "order": 7,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_8.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_8_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "cancer_animation", "type": "lottie", "assetKey": "Cancer_Cell_Animation.lottie", "behavior": { "autoplay": false, "loop": true, "speed": 1.0 }, "layoutHints": { "preferredAlignment": "center", "scale": 2.3 }, "position": { "alignment": "center" } },
+        { "id": "overlay_text", "type": "text", "content": { "textKey": "cancer_cell", "translations": { "English": "What is Breast\nCancer?", "اردو": "بریسٹ کینسر کیا ہے؟", "Roman Urdu": "Breast Cancer kya hai?" } }, "style": { "fontSize": 32, "fontWeight": "w800", "color": "#8B5E3C", "textAlign": "center" }, "position": { "alignment": "overlay_center" } }
+      ],
+      "transitions": { "enter": { "type": "fade", "duration": 300 }, "exit": { "type": "slide_left", "duration": 300 } }
+    },
+    {
+      "id": "page_9",
+      "order": 8,
+      "background": { "color": "#FFFFFF" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_9.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_9_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "family_animation", "type": "lottie", "assetKey": "family_tree.lottie", "behavior": { "autoplay": true, "loop": true }, "layoutHints": { "preferredAlignment": "center_left", "widthFraction": 0.5, "heightPx": 450 }, "position": { "alignment": "center_left", "offset": { "yPx": -50 } } },
+        { "id": "bottom_text", "type": "text", "content": { "textKey": "family_tree", "translations": { "English": "Are you at risk?", "اردو": "کیا آپ کو خطرہ ہے؟", "Roman Urdu": "Kya aap khatrai mei hai?" } }, "styleRef": "bottom_title", "position": { "alignment": "bottom_center", "margin": { "bottom": 20 } } }
+      ]
+    },
+    {
+      "id": "page_10",
+      "order": 9,
+      "background": { "color": "#EFA7BC" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_10.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_10_urdu.mp3" },
+      "layout": { "type": "column", "alignment": "center", "padding": { "left": 20, "right": 20 }, "gap": 12 },
+      "components": [
+        { "id": "video_card", "type": "videoCard", "metadata": { "videoUrl": "https://youtu.be/axaSW2Gavos?si=JF8XXSZDZH-1qr55", "duration": "3:57", "thumbnail": "miss_bibi.png", "favoriteId": "self_examine_card_title", "styling": { "backgroundColor": "#EFA7BC", "cornerRadius": 16, "elevation": 4, "marginHorizontal": 20, "aspectRatio": "16:9" } }, "position": { "alignment": "center" } },
+        { "id": "card_title", "type": "text", "content": { "textKey": "self_examine_card_title", "translations": { "English": "How to self-examine?", "اردو": "خود کا معائنہ", "Roman Urdu": "khud ka muayna kaise karain?" } }, "styleRef": "card_title", "position": { "alignment": "card_top", "margin": { "top": 16, "left": 16 } } },
+        { "id": "card_sub", "type": "text", "content": { "textKey": "self_examine_subtitle", "translations": { "English": "Understanding the basics in 3 min", "اردو": "3 منٹ میں بنیادی باتیں سمجھیں", "Roman Urdu": "3 minute mein banyadi baatain samjhain" } }, "styleRef": "card_sub", "position": { "alignment": "below_title", "margin": { "top": 8, "left": 16 } } },
+        { "id": "watch_now", "type": "text", "content": { "translations": { "English": "Watch now", "اردو": "اب دیکھیں", "Roman Urdu": "Ab dekhain" } }, "styleRef": "page_bottom", "position": { "alignment": "bottom_center", "margin": { "bottom": 40 } } }
+      ]
+    },
+    {
+      "id": "page_11",
+      "order": 10,
+      "background": { "type": "image", "asset": "bibi1.png", "fit": "cover" },
+      "audio": { "English": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11.mp3", "اردو": "gs://bibi-app-d41a0.firebasestorage.app/audio/onboarding_11_urdu.mp3" },
+      "layout": { "type": "layers", "alignment": "center" },
+      "components": [
+        { "id": "title", "type": "text", "content": { "textKey": "how_to_treat_title", "translations": { "English": "How to Treat?", "اردو": "علاج کیسے کریں؟", "Roman Urdu": "Ilaj kaise karain?" } }, "style": { "fontSize": 26, "fontWeight": "w800", "color": "#8B5E3C", "textAlign": "center" }, "position": { "alignment": "top_center", "margin": { "top": 60 } } },
+        { "id": "label_radiation", "type": "label", "content": { "translations": { "English": "Radiation", "اردو": "تابکاری", "Roman Urdu": "Radiation" } }, "style": { "fontSize": 13, "fontWeight": "w600", "fontFamily": "Edu", "backgroundColor": "#FFFFFF", "backgroundOpacity": 0.9, "paddingVertical": 8, "paddingHorizontal": 12, "cornerRadius": 8 }, "position": { "alignment": "top_left", "offset": { "yFraction": 0.10, "xPx": 20 } }, "behavior": { "arrow": { "enabled": true, "startFraction": { "x": 0.20, "y": 0.14 }, "endFraction": { "x": 0.30, "y": 0.20 }, "controlFraction": { "x": 0.21, "y": 0.18 }, "color": "#8B5E3C", "opacity": 0.6, "strokeWidth": 1.0 } } },
+        { "id": "label_chemotherapy", "type": "label", "content": { "translations": { "English": "Chemotherapy", "اردو": "کیموتھیراپی", "Roman Urdu": "Kemotherapy" } }, "style": { "fontSize": 13, "fontWeight": "w600", "fontFamily": "Edu", "backgroundColor": "#FFFFFF", "backgroundOpacity": 0.9, "paddingVertical": 8, "paddingHorizontal": 12, "cornerRadius": 8 }, "position": { "alignment": "top_right", "offset": { "yFraction": 0.10, "rightPx": 20 } }, "behavior": { "arrow": { "enabled": true, "startFraction": { "x": 0.80, "y": 0.14 }, "endFraction": { "x": 0.70, "y": 0.20 }, "controlFraction": { "x": 0.79, "y": 0.18 }, "color": "#8B5E3C", "opacity": 0.6, "strokeWidth": 1.0 } } },
+        { "id": "label_hormonal", "type": "label", "content": { "translations": { "English": "Hormonal Tablets", "اردو": "ہارمونل گولیاں", "Roman Urdu": "Harmonal Goliyain" } }, "style": { "fontSize": 13, "fontWeight": "w600", "fontFamily": "Edu", "backgroundColor": "#FFFFFF", "backgroundOpacity": 0.9, "paddingVertical": 8, "paddingHorizontal": 12, "cornerRadius": 8 }, "position": { "alignment": "bottom_left", "offset": { "yPx": -30, "xPx": 20 } }, "behavior": { "arrow": { "enabled": true, "startFraction": { "x": 0.12, "y": 0.84 }, "endFraction": { "x": 0.22, "y": 0.76 }, "controlFraction": { "x": 0.22, "y": 0.79 }, "color": "#8B5E3C", "opacity": 0.6, "strokeWidth": 1.0 } } },
+        { "id": "label_surgery", "type": "label", "content": { "translations": { "English": "Surgery", "اردو": "سرجری", "Roman Urdu": "Surgery" } }, "style": { "fontSize": 13, "fontWeight": "w600", "fontFamily": "Edu", "backgroundColor": "#FFFFFF", "backgroundOpacity": 0.9, "paddingVertical": 8, "paddingHorizontal": 12, "cornerRadius": 8 }, "position": { "alignment": "bottom_right", "offset": { "yPx": -30, "rightPx": 20 } }, "behavior": { "arrow": { "enabled": true, "startFraction": { "x": 0.88, "y": 0.84 }, "endFraction": { "x": 0.78, "y": 0.76 }, "controlFraction": { "x": 0.78, "y": 0.79 }, "color": "#8B5E3C", "opacity": 0.6, "strokeWidth": 1.0 } } }
+      ]
+    }
+  ]
+}

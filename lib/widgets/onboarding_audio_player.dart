@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 import '../bloc/bloc_exports.dart';
+import '../services/remote_asset_service.dart';
 
 /// A minimal audio player widget for onboarding screens
 class OnboardingAudioPlayer extends StatefulWidget {
@@ -42,7 +43,17 @@ class _OnboardingAudioPlayerState extends State<OnboardingAudioPlayer> {
   Future<void> _loadAudio(String path) async {
     if (_loadedAudioPath != path) {
       await _audioPlayer.stop();
-      await _audioPlayer.setAsset(path);
+      
+      // Support both Firebase gs:// URLs and local assets
+      if (RemoteAssetService.isRemoteUrl(path)) {
+        final httpsUrl = RemoteAssetService.convertGsUrlToHttps(path);
+        await _audioPlayer.setUrl(httpsUrl);
+        debugPrint('🔊 Loading audio from Firebase: $path');
+      } else {
+        await _audioPlayer.setAsset(path);
+        debugPrint('🔊 Loading audio from local assets: $path');
+      }
+      
       _loadedAudioPath = path;
     }
   }

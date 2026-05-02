@@ -1,26 +1,30 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../bloc/bloc_exports.dart';
+import '../models/video_card_data.dart';
 import '../widgets/onboarding_widgets_exports.dart';
 
-// ── Lyric timestamps ──────────────────────────────────────────────────────────
-const Map<String, List<double>> _lyricTimestamps = {
-  'assets/audio/whatisbreastcancer.m4a': [0, 4, 6, 9, 11, 15, 17],
+// ── Lyric timestamps (mutable; Firestore can override/extend these) ───────────
+Map<String, List<double>> _lyricTimestamps = {
+  'assets/audio/whatisbreastcancer.mp3': [0, 2, 5, 7, 10, 13, 16],
   'assets/audio/whatisbreastcancer_urdu.m4a': [0, 6, 11, 17],
-  'assets/audio/risk.m4a': [0, 4, 8, 12],
+  'assets/audio/risk.mp3': [0, 3, 6, 10],
   'assets/audio/risk_urdu.m4a': [0, 8, 13],
   'assets/audio/screen.m4a': [0, 5, 8, 12, 16, 20],
   'assets/audio/screen_urdu.m4a': [0, 6, 10, 16, 22, 26],
-  'assets/audio/treat.m4a': [0, 7, 12, 18],
-  'assets/audio/treat_urdu.m4a': [0, 7, 14, 18],
+  'assets/audio/treat.mp3': [0, 4, 9, 15],
+  'assets/audio/treat_urdu.mp3': [0, 7, 14, 18],
   'assets/audio/biopsy.m4a': [0, 5, 9, 13],
   'assets/audio/biopsy_urdu.m4a': [0, 5, 10, 15, 17],
   'assets/audio/prevent.m4a': [0, 5, 9, 13],
   'assets/audio/prevent_urdu.m4a': [0, 6, 10, 15],
-  'assets/audio/support.m4a': [0, 6, 12, 16],
+  'assets/audio/support.mp3': [0, 5, 11, 15],
   'assets/audio/support_urdu.m4a': [0, 8, 16, 21],
 };
 
@@ -81,27 +85,28 @@ class AudioContent {
   final List<String> romanUrduLyrics;
   final List<String> englishLyrics;
   final double offsetXPercent;
-final double offsetYPercent;
+  final double offsetYPercent;
 
   const AudioContent({
-  required this.title,
-  this.urduTitle = '',
-  this.romanUrduTitle = '',
-  required this.subtitle,
-  required this.audioPath,
-  required this.urduAudioPath,
-  required this.animationPath,
-  required this.urduLyrics,
-  required this.romanUrduLyrics,
-  required this.englishLyrics,
-  this.scale = 1.0,
-  this.offsetXPercent = 0.0,
-  this.offsetYPercent = 0.0,
-});
+    required this.title,
+    this.urduTitle = '',
+    this.romanUrduTitle = '',
+    required this.subtitle,
+    required this.audioPath,
+    required this.urduAudioPath,
+    required this.animationPath,
+    required this.urduLyrics,
+    required this.romanUrduLyrics,
+    required this.englishLyrics,
+    this.scale = 1.0,
+    this.offsetXPercent = 0.0,
+    this.offsetYPercent = 0.0,
+  });
 
   String getTitle(String language) {
     if (language == 'Urdu' && urduTitle.isNotEmpty) return urduTitle;
-    if (language == 'Roman Urdu' && romanUrduTitle.isNotEmpty) return romanUrduTitle;
+    if (language == 'Roman Urdu' && romanUrduTitle.isNotEmpty)
+      return romanUrduTitle;
     return title;
   }
 
@@ -122,15 +127,14 @@ final double offsetYPercent;
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 class AudioPlayerPage extends StatefulWidget {
-  final AudioContent audioContent;
+  final AudioContent? audioContent;
 
-  /// Optional: list of all content + current index for prev/next navigation
   final List<AudioContent>? allContent;
   final int? currentIndex;
 
   const AudioPlayerPage({
     super.key,
-    required this.audioContent,
+    this.audioContent,
     this.allContent,
     this.currentIndex,
   });
@@ -139,7 +143,8 @@ class AudioPlayerPage extends StatefulWidget {
   State<AudioPlayerPage> createState() => _AudioPlayerPageState();
 }
 
-class _AudioPlayerPageState extends State<AudioPlayerPage> {
+class _AudioPlayerPageState extends State<AudioPlayerPage>
+    with WidgetsBindingObserver {
   late PageController _pageController;
   late AudioPlayer _player;
   bool _didInitLanguage = false;
@@ -151,8 +156,19 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
   String _currentLanguage = 'English';
   String _loadedAudioPath = '';
 
-  // Tracks which content item is currently showing (for prev/next)
-  late AudioContent _activeContent;
+  AudioContent _activeContent = const AudioContent(
+    title: '',
+    subtitle: '',
+    audioPath: '',
+    urduAudioPath: '',
+    animationPath: '',
+    urduLyrics: [],
+    romanUrduLyrics: [],
+    englishLyrics: [],
+  );
+
+  List<AudioContent>? _fetchedContent;
+  String _backgroundHex = '#FFF4F4';
 
   int _loadGeneration = 0;
   bool _isLoading = false;
@@ -162,11 +178,199 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
       _activeContent.getLyrics(_currentLanguage);
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _player.pause();
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    _activeContent = widget.audioContent;
+    WidgetsBinding.instance.addObserver(this);
     _pageController = PageController();
+
+    // Always prefer the Firestore document; fall back to the passed content
+    // only if the remote config cannot be loaded.
+    debugPrint('🎧 AudioPlayerPage init: fetching Firestore config first');
+    _loadFromFirestoreAndInit();
+  }
+
+  Future<void> _loadFromFirestoreAndInit() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('json_documents')
+          .doc('audioPlayer')
+          .get();
+
+      if (!snap.exists) return _useFallbackAndInit();
+      final data = snap.data();
+      if (data == null) return _useFallbackAndInit();
+
+      final root = data['audioPlayer'] as Map<String, dynamic>? ?? data;
+      _backgroundHex = (root['backgroundColor'] as String?) ?? _backgroundHex;
+      debugPrint('🎧 AudioPlayerPage Firestore document loaded: json_documents/audioPlayer');
+
+      // Merge lyric timestamps from Firestore (keys are audio paths like gs://...)
+      final lyricRaw = root['lyricTimestamps'] as Map<String, dynamic>?;
+      if (lyricRaw != null) {
+        lyricRaw.forEach((key, val) {
+          if (val is List) {
+            try {
+              final parsed = val
+                  .map<double>((e) => (e is num) ? e.toDouble() : double.parse(e.toString()))
+                  .toList();
+              _lyricTimestamps[key.toString()] = parsed;
+            } catch (_) {
+              // ignore parse errors per-entry
+            }
+          }
+        });
+      }
+
+      final contentRaw = root['content'] as List<dynamic>? ?? [];
+      final parsed = <AudioContent>[];
+      for (final item in contentRaw) {
+        if (item is! Map<String, dynamic>) continue;
+        parsed.add(_parseAudioContent(item));
+      }
+
+      if (parsed.isEmpty) return _useFallbackAndInit();
+
+      _fetchedContent = parsed;
+      _activeContent = _selectInitialContent(parsed);
+      debugPrint(
+        '🎧 AudioPlayerPage selected remote content: ${_activeContent.title.isNotEmpty ? _activeContent.title : '(untitled)'} | '
+        'audio=${_activeContent.audioPath} | urduAudio=${_activeContent.urduAudioPath} | '
+        'animation=${_activeContent.animationPath}',
+      );
+      if (mounted) setState(() {});
+      _initializeAudioPlayer();
+    } catch (e) {
+      if (kDebugMode) print('Failed to load audioPlayer config: $e');
+      _useFallbackAndInit();
+    }
+  }
+
+  AudioContent _parseAudioContent(Map<String, dynamic> raw) {
+    String title = '';
+    String urduTitle = '';
+    String romanTitle = '';
+    final titleMap = raw['title'] as Map<String, dynamic>?;
+    if (titleMap != null) {
+      title = titleMap['English']?.toString() ?? titleMap['english']?.toString() ?? '';
+      urduTitle = titleMap['اردو']?.toString() ?? titleMap['Urdu']?.toString() ?? '';
+      romanTitle = titleMap['Roman Urdu']?.toString() ?? '';
+    }
+
+    final subtitle = raw['subtitle']?.toString() ?? '';
+    final scale = (raw['animation']?['scale'] is num) ? (raw['animation']['scale'] as num).toDouble() : 1.0;
+    final offsetX = (raw['animation']?['offsetXPercent'] is num) ? (raw['animation']['offsetXPercent'] as num).toDouble() : 0.0;
+    final offsetY = (raw['animation']?['offsetYPercent'] is num) ? (raw['animation']['offsetYPercent'] as num).toDouble() : 0.0;
+
+    final animAsset = raw['animation']?['asset']?.toString() ?? '';
+
+    final audioMap = raw['audio'] as Map<String, dynamic>? ?? {};
+    final audioEnglish = audioMap['English']?.toString() ?? audioMap['english']?.toString() ?? '';
+    final audioUrdu = audioMap['Urdu']?.toString() ?? audioMap['اردو']?.toString() ?? audioMap['Roman Urdu']?.toString() ?? '';
+
+    final lyricsMap = raw['lyrics'] as Map<String, dynamic>? ?? {};
+    final englishLyrics = <String>[];
+    final urduLyrics = <String>[];
+    final romanLyrics = <String>[];
+    if (lyricsMap['English'] is List) englishLyrics.addAll((lyricsMap['English'] as List).map((e) => e.toString()));
+    if (lyricsMap['Urdu'] is List) urduLyrics.addAll((lyricsMap['Urdu'] as List).map((e) => e.toString()));
+    if (lyricsMap['Roman Urdu'] is List) romanLyrics.addAll((lyricsMap['Roman Urdu'] as List).map((e) => e.toString()));
+
+    return AudioContent(
+      title: title,
+      urduTitle: urduTitle,
+      romanUrduTitle: romanTitle,
+      subtitle: subtitle,
+      audioPath: audioEnglish,
+      urduAudioPath: audioUrdu,
+      animationPath: animAsset,
+      urduLyrics: urduLyrics,
+      romanUrduLyrics: romanLyrics,
+      englishLyrics: englishLyrics,
+      scale: scale,
+      offsetXPercent: offsetX,
+      offsetYPercent: offsetY,
+    );
+  }
+
+  AudioContent _selectInitialContent(List<AudioContent> parsed) {
+    final local = widget.audioContent;
+    if (local == null) {
+      debugPrint('🎧 AudioPlayerPage no local content passed; using first Firestore item');
+      return parsed.first;
+    }
+
+    final localAudio = local.audioPath.trim();
+    final localUrduAudio = local.urduAudioPath.trim();
+    for (final item in parsed) {
+      if (item.audioPath == localAudio ||
+          item.urduAudioPath == localAudio ||
+          item.audioPath == localUrduAudio ||
+          item.urduAudioPath == localUrduAudio) {
+        debugPrint(
+          '🎧 AudioPlayerPage matched local content to Firestore item by audio path: '
+          'local=$localAudio / $localUrduAudio -> remote=${item.audioPath} / ${item.urduAudioPath}',
+        );
+        return item;
+      }
+    }
+
+    final localTitle = local.title.trim().toLowerCase();
+    final localSubtitle = local.subtitle.trim().toLowerCase();
+    for (final item in parsed) {
+      if (item.title.trim().toLowerCase() == localTitle ||
+          item.subtitle.trim().toLowerCase() == localSubtitle) {
+        debugPrint(
+          '🎧 AudioPlayerPage matched local content to Firestore item by title/subtitle: '
+          'localTitle=$localTitle localSubtitle=$localSubtitle -> remoteTitle=${item.title}',
+        );
+        return item;
+      }
+    }
+
+    debugPrint(
+      '🎧 AudioPlayerPage could not match local content; falling back to first Firestore item. '
+      'localAudio=$localAudio localUrduAudio=$localUrduAudio localTitle=$localTitle localSubtitle=$localSubtitle',
+    );
+    return parsed.first;
+  }
+
+  void _useFallbackAndInit() {
+    // fallback to provided widget.audioContent or keep existing
+    if (widget.audioContent != null) {
+      _activeContent = widget.audioContent!;
+      debugPrint(
+        '🎧 AudioPlayerPage fallback: using passed local content '
+        'audio=${_activeContent.audioPath} | urduAudio=${_activeContent.urduAudioPath} | '
+        'animation=${_activeContent.animationPath}',
+      );
+    } else {
+      _activeContent = const AudioContent(
+        title: '',
+        subtitle: '',
+        audioPath: '',
+        urduAudioPath: '',
+        animationPath: '',
+        urduLyrics: [],
+        romanUrduLyrics: [],
+        englishLyrics: [],
+      );
+      debugPrint('🎧 AudioPlayerPage fallback: no content available, using empty placeholder');
+    }
     _initializeAudioPlayer();
+  }
+
+  Color _hexToColor(String hex) {
+    var h = hex.replaceAll('#', '').toUpperCase();
+    if (h.length == 6) h = 'FF$h';
+    return Color(int.parse(h, radix: 16));
   }
 
   @override
@@ -174,6 +378,8 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
     super.didChangeDependencies();
     final state = context.read<LanguageBloc>().state;
     if (state is LanguageSelected && !_didInitLanguage) {
+      // If we don't yet have content loaded, delay until it arrives
+      if (widget.audioContent == null && _fetchedContent == null) return;
       _didInitLanguage = true;
       _currentLanguage = state.language;
       final path = _activeContent.getAudioPath(_currentLanguage);
@@ -189,16 +395,23 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
       if (!mounted) return;
       setState(() => _isInitializing = false);
 
+      debugPrint(
+        '🎧 AudioPlayerPage initializing player with current content: '
+        'title=${_activeContent.title} audio=${_activeContent.audioPath} '
+        'urduAudio=${_activeContent.urduAudioPath} animation=${_activeContent.animationPath}',
+      );
+
       _loadedAudioPath = _activeContent.audioPath;
       _loadAudio(_loadedAudioPath);
 
       _player.positionStream.listen((pos) {
         if (!mounted) return;
-        final secs = pos.inSeconds.toDouble().clamp(0.0, _duration);
+        final secs =
+            pos.inSeconds.toDouble().clamp(0.0, _duration);
         setState(() {
           _position = secs;
-          _currentLyricLineIndex =
-              _getLyricIndex(_loadedAudioPath, secs, _lyricLines.length);
+          _currentLyricLineIndex = _getLyricIndex(
+              _loadedAudioPath, secs, _lyricLines.length);
         });
       });
 
@@ -212,7 +425,8 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
         setState(() => _isInitializing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Audio player unavailable. Please restart the app.'),
+            content: Text(
+                'Audio player unavailable. Please restart the app.'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -224,22 +438,56 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
     final int generation = ++_loadGeneration;
     setState(() => _isLoading = true);
 
-    _player.setAsset(path).then((_) {
-      if (!mounted || generation != _loadGeneration) return;
-      final dur = _player.duration;
-      setState(() {
-        if (dur != null) _duration = dur.inSeconds.toDouble();
-        _position = 0.0;
-        _currentLyricLineIndex = 0;
-        _loadedAudioPath = path;
-        _isLoading = false;
+    debugPrint('🎧 AudioPlayerPage load requested: $path');
+    Future<void> _setAndPlay(String urlOrAsset, {bool isUrl = false}) async {
+      if (generation != _loadGeneration) return;
+      try {
+        debugPrint(
+          '🎧 AudioPlayerPage loading media type=${isUrl ? 'network' : 'asset'} '
+          'value=$urlOrAsset',
+        );
+        if (isUrl) {
+          await _player.setUrl(urlOrAsset);
+        } else {
+          await _player.setAsset(urlOrAsset);
+        }
+        if (!mounted || generation != _loadGeneration) return;
+        final dur = _player.duration;
+        setState(() {
+          if (dur != null) _duration = dur.inSeconds.toDouble();
+          _position = 0.0;
+          _currentLyricLineIndex = 0;
+          _loadedAudioPath = path;
+          _isLoading = false;
+        });
+        _player.play();
+        debugPrint('🎧 AudioPlayerPage playback started: $_loadedAudioPath');
+      } catch (e) {
+        if (!mounted || generation != _loadGeneration) return;
+        if (kDebugMode) print('Audio load error: $e');
+        setState(() => _isLoading = false);
+      }
+    }
+
+    // Determine type of path: http(s), gs:// (Firebase Storage), or local asset
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      debugPrint('🎧 AudioPlayerPage resolved audio source: network url');
+      _setAndPlay(path, isUrl: true);
+    } else if (path.startsWith('gs://')) {
+      debugPrint('🎧 AudioPlayerPage resolved audio source: Firebase Storage gs://');
+      FirebaseStorage.instance.refFromURL(path).getDownloadURL().then((downloadUrl) {
+        debugPrint('🎧 AudioPlayerPage gs:// download URL resolved: $downloadUrl');
+        _setAndPlay(downloadUrl, isUrl: true);
+      }).catchError((e) {
+        if (kDebugMode) print('Failed to resolve gs:// URL: $e');
+        // fallback try as asset
+        debugPrint('🎧 AudioPlayerPage falling back to asset load for: $path');
+        _setAndPlay(path, isUrl: false);
       });
-      _player.play();
-    }).catchError((e) {
-      if (!mounted || generation != _loadGeneration) return;
-      if (kDebugMode) print('Audio load error: $e');
-      setState(() => _isLoading = false);
-    });
+    } else {
+      debugPrint('🎧 AudioPlayerPage resolved audio source: local asset');
+      _setAndPlay(path, isUrl: false);
+    }
   }
 
   void _onLanguageChanged(String newLanguage) {
@@ -258,20 +506,19 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
     _player.seek(Duration(seconds: clamped.toInt()));
     setState(() {
       _position = clamped;
-      _currentLyricLineIndex =
-          _getLyricIndex(_loadedAudioPath, clamped, _lyricLines.length);
+      _currentLyricLineIndex = _getLyricIndex(
+          _loadedAudioPath, clamped, _lyricLines.length);
     });
   }
 
-  /// Switch to a different AudioContent without leaving the page
   void _switchContent(AudioContent newContent) {
     _player.stop();
     setState(() {
       _activeContent = newContent;
       _position = 0.0;
       _currentLyricLineIndex = 0;
-      // Go back to play screen if on lyrics screen
-      if (_pageController.hasClients && _pageController.page != 0) {
+      if (_pageController.hasClients &&
+          _pageController.page != 0) {
         _pageController.jumpToPage(0);
       }
     });
@@ -280,27 +527,55 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
   }
 
   void _goToPrevious() {
-    final all = widget.allContent;
+    final all = widget.allContent ?? _fetchedContent;
     if (all == null) return;
     final idx = all.indexOf(_activeContent);
     if (idx > 0) _switchContent(all[idx - 1]);
   }
 
   void _goToNext() {
-    final all = widget.allContent;
+    final all = widget.allContent ?? _fetchedContent;
     if (all == null) return;
     final idx = all.indexOf(_activeContent);
     if (idx < all.length - 1) _switchContent(all[idx + 1]);
   }
 
+  VideoCardData _favoriteVideoData() {
+    final title = _activeContent.getTitle(_currentLanguage).trim();
+    final subtitle = _activeContent.subtitle.trim();
+    return VideoCardData(
+      title: title.isNotEmpty ? title : 'Audio',
+      subtitle: subtitle.isNotEmpty ? subtitle : 'Audio',
+      videoUrl: _activeContent.audioPath.isNotEmpty ? _activeContent.audioPath : null,
+      duration: _formatTime(_duration),
+      imagePlaceholder: 'miss_bibi.png',
+      audioContent: _activeContent,
+      titleKey: title.isNotEmpty ? title : _activeContent.audioPath,
+      subtitleKey: subtitle.isNotEmpty ? subtitle : null,
+      favoriteId: _activeContent.audioPath.isNotEmpty
+          ? _activeContent.audioPath
+          : (title.isNotEmpty ? title : _activeContent.subtitle),
+    );
+  }
+
+  void _toggleFavorite() {
+    context.read<FavoritesBloc>().add(ToggleFavoriteEvent(_favoriteVideoData()));
+  }
+
+  bool get _isFavorite => context
+      .read<FavoritesBloc>()
+      .state
+      .favoriteIds
+      .contains(_favoriteVideoData().favoriteId);
+
   bool get _hasPrevious {
-    final all = widget.allContent;
+    final all = widget.allContent ?? _fetchedContent;
     if (all == null) return false;
     return all.indexOf(_activeContent) > 0;
   }
 
   bool get _hasNext {
-    final all = widget.allContent;
+    final all = widget.allContent ?? _fetchedContent;
     if (all == null) return false;
     final idx = all.indexOf(_activeContent);
     return idx < all.length - 1;
@@ -308,6 +583,7 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _loadGeneration++;
     _pageController.dispose();
     _player.dispose();
@@ -322,15 +598,19 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
   @override
   Widget build(BuildContext context) {
     if (_isInitializing) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: Color(0xFFE86A8D)),
-              SizedBox(height: 16),
-              Text('Preparing audio...',
-                  style: TextStyle(color: Color(0xFF999999))),
+              const CircularProgressIndicator(
+                  color: Color(0xFFE86A8D)),
+              SizedBox(height: 16.h),
+              Text(
+                'Preparing audio...',
+                style: TextStyle(
+                    fontSize: 14.sp, color: const Color(0xFF999999)),
+              ),
             ],
           ),
         ),
@@ -339,7 +619,8 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
 
     return BlocListener<LanguageBloc, LanguageState>(
       listener: (context, state) {
-        if (state is LanguageSelected) _onLanguageChanged(state.language);
+        if (state is LanguageSelected)
+          _onLanguageChanged(state.language);
       },
       child: PopScope(
         canPop: false,
@@ -362,73 +643,109 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
     );
   }
 
-  // ── Play screen ─────────────────────────────────────────────────────────────
+  // ── Play screen ───────────────────────────────────────────────────────────
 
   Widget _buildPlayScreen() {
-  return Container(
-    color: const Color(0xFFFFF5F5),
-    child: Column(
-      children: [
-        _buildHeader(),
+    // Check if the current animation needs a gradient
+    final bool needsGradient = _activeContent.animationPath ==
+        'assets/images/Bibi_Onboarding_Right.lottie';
 
-        Expanded(
-          child: RepaintBoundary(
-            child: Center(
-              child: OnboardingAnimation(
-                key: ValueKey(_activeContent.animationPath),
-                assetPath: _activeContent.animationPath,
+    final bgColor = _hexToColor(_backgroundHex);
+    return Container(
+      color: bgColor,
+      child: Column(
+        children: [
+          _buildHeader(),
 
-                // scaling handled by widget (responsive via MediaQuery inside)
-                scale: _activeContent.scale,
+          Expanded(
+            child: RepaintBoundary(
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  Center(
+                    child: OnboardingAnimation(
+                      key: ValueKey(_activeContent.animationPath),
+                      assetPath: _activeContent.animationPath,
+                      scale: _activeContent.scale,
+                      translateXPercent:
+                          _activeContent.offsetXPercent,
+                      translateYPercent:
+                          _activeContent.offsetYPercent,
+                      alignment: Alignment.center,
+                      repeat: true,
+                    ),
+                  ),
 
-                // percentage offsets (NOW correctly used inside widget)
-                translateXPercent: _activeContent.offsetXPercent,
-                translateYPercent: _activeContent.offsetYPercent,
-
-                alignment: Alignment.center,
-                repeat: true,
+                  // Only show gradient for Bibi_Onboarding_Right.lottie
+                          if (needsGradient)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: -15.h, // anchor to bottom of Stack
+                              child: IgnorePointer(
+                                child: Container(
+                                  height: 0.20.sh,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        bgColor.withAlpha(0x00),
+                                        bgColor.withAlpha(0x18),
+                                        bgColor.withAlpha(0x55),
+                                        bgColor.withAlpha(0xAA),
+                                        bgColor.withAlpha(0xF2),
+                                        bgColor.withAlpha(0xFF),
+                                      ],
+                                      stops: [0.0, 0.2, 0.42, 0.64, 0.84, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                ],
               ),
             ),
           ),
-        ),
 
-        _buildPlayerControls(),
-      ],
-    ),
-  );
-}
+          _buildPlayerControls(),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeader() {
-    final isRtl = _currentLanguage == 'Urdu';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Back button
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: _circleButton(
-              child: const Icon(Icons.arrow_back_ios_new,
-                  color: Color(0xFF8B5E3C), size: 16),
+              child: Icon(Icons.arrow_back_ios_new,
+                  color: const Color(0xFF8B5E3C), size: 16.r),
             ),
           ),
 
-          // "NOW PLAYING" — translated
           Text(
             _tr(_currentLanguage, 'now_playing'),
-            style: const TextStyle(
-              fontSize: 11,
+            style: TextStyle(
+              fontSize: 11.sp,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
+              color: const Color(0xFF333333),
               letterSpacing: 1.2,
             ),
           ),
 
-          // Favourite button
-          _circleButton(
-            child: const Icon(Icons.favorite_border,
-                color: Color(0xFFE86A8D), size: 18),
+          BlocBuilder<FavoritesBloc, FavoritesState>(
+            builder: (context, favoritesState) {
+              final isFavorite = favoritesState.favoriteIds.contains(_favoriteVideoData().favoriteId);
+              return _favoriteCircleButton(
+                isFavorite: isFavorite,
+                onTap: _toggleFavorite,
+              );
+            },
           ),
         ],
       ),
@@ -436,35 +753,31 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
   }
 
   Widget _buildPlayerControls() {
-    final isRtl = _currentLanguage == 'Urdu';
-
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 16.h),
       child: Column(
         children: [
-          // Time labels
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(_formatTime(_position),
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF999999),
+                  style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF999999),
                       fontWeight: FontWeight.w500)),
               Text(_formatTime(_duration),
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF999999),
+                  style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF999999),
                       fontWeight: FontWeight.w500)),
             ],
           ),
 
-          // Seek bar
           SliderTheme(
             data: SliderThemeData(
-              trackHeight: 4.0,
-              thumbShape:
-                  const RoundSliderThumbShape(enabledThumbRadius: 8.0),
+              trackHeight: 4.h,
+              thumbShape: RoundSliderThumbShape(
+                  enabledThumbRadius: 8.r),
               overlayShape: SliderComponentShape.noOverlay,
             ),
             child: Slider(
@@ -473,65 +786,65 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
               max: _duration,
               activeColor: const Color(0xFFE86A8D),
               inactiveColor: const Color(0xFFFFD5E0),
-              onChanged: _isLoading ? null : (value) => _seekTo(value),
+              onChanged:
+                  _isLoading ? null : (value) => _seekTo(value),
             ),
           ),
 
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
 
-          // Title — translated
           Text(
             _activeContent.getTitle(_currentLanguage),
             textAlign: TextAlign.center,
-            textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
-            style: const TextStyle(
-                fontSize: 20,
+            textDirection:
+                _currentLanguage == 'Urdu'
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+            style: TextStyle(
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF333333)),
+                color: const Color(0xFF333333)),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
 
-          // "BIBI" label — translated
           Text(
             _tr(_currentLanguage, 'bibi'),
-            style: const TextStyle(
-                fontSize: 12,
+            style: TextStyle(
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF999999),
+                color: const Color(0xFF999999),
                 letterSpacing: 1.2),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
-          // Transport controls row
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ← Previous video
               GestureDetector(
                 onTap: _hasPrevious ? _goToPrevious : null,
                 child: Icon(Icons.skip_previous_rounded,
                     color: _hasPrevious
                         ? const Color(0xFFE86A8D)
                         : const Color(0xFFE86A8D).withOpacity(0.3),
-                    size: 36),
+                    size: 36.r),
               ),
 
-              const SizedBox(width: 16),
+              SizedBox(width: 16.w),
 
-              // ⏪ Rewind 15 s
               GestureDetector(
-                onTap: _isLoading ? null : () => _seekTo(_position - 15),
+                onTap: _isLoading
+                    ? null
+                    : () => _seekTo(_position - 15),
                 child: Icon(Icons.fast_rewind_rounded,
                     color: _isLoading
                         ? const Color(0xFFE86A8D).withOpacity(0.4)
                         : const Color(0xFFE86A8D),
-                    size: 38),
+                    size: 38.r),
               ),
 
-              const SizedBox(width: 20),
+              SizedBox(width: 20.w),
 
-              // ▶ / ⏸ Play/pause
               GestureDetector(
                 onTap: _isLoading
                     ? null
@@ -543,8 +856,8 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
                         }
                       },
                 child: Container(
-                  width: 68,
-                  height: 68,
+                  width: 68.r,
+                  height: 68.r,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _isLoading
@@ -558,75 +871,74 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
                     ],
                   ),
                   child: _isLoading
-                      ? const Padding(
-                          padding: EdgeInsets.all(20),
-                          child: CircularProgressIndicator(
+                      ? Padding(
+                          padding: EdgeInsets.all(20.r),
+                          child: const CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5))
                       : Icon(
                           _isPlaying
                               ? Icons.pause
                               : Icons.play_arrow_rounded,
                           color: Colors.white,
-                          size: 36),
+                          size: 36.r),
                 ),
               ),
 
-              const SizedBox(width: 20),
+              SizedBox(width: 20.w),
 
-              // ⏩ Forward 15 s
               GestureDetector(
-                onTap: _isLoading ? null : () => _seekTo(_position + 15),
+                onTap: _isLoading
+                    ? null
+                    : () => _seekTo(_position + 15),
                 child: Icon(Icons.fast_forward_rounded,
                     color: _isLoading
                         ? const Color(0xFFE86A8D).withOpacity(0.4)
                         : const Color(0xFFE86A8D),
-                    size: 38),
+                    size: 38.r),
               ),
 
-              const SizedBox(width: 16),
+              SizedBox(width: 16.w),
 
-              // → Next video
               GestureDetector(
                 onTap: _hasNext ? _goToNext : null,
                 child: Icon(Icons.skip_next_rounded,
                     color: _hasNext
                         ? const Color(0xFFE86A8D)
                         : const Color(0xFFE86A8D).withOpacity(0.3),
-                    size: 36),
+                    size: 36.r),
               ),
             ],
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
-          // Lyrics button
           GestureDetector(
             onTap: () => _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut),
             child: Column(
               children: [
-                const Icon(Icons.keyboard_arrow_up,
-                    color: Color(0xFFE86A8D), size: 22),
+                Icon(Icons.keyboard_arrow_up,
+                    color: const Color(0xFFE86A8D), size: 22.r),
                 Text(
                   _tr(_currentLanguage, 'lyrics'),
-                  style: const TextStyle(
-                      fontSize: 11,
+                  style: TextStyle(
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF999999),
+                      color: const Color(0xFF999999),
                       letterSpacing: 1.2),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
         ],
       ),
     );
   }
 
-  // ── Lyrics screen ────────────────────────────────────────────────────────────
+  // ── Lyrics screen ─────────────────────────────────────────────────────────
 
   Widget _buildLyricsScreen() {
     final lines = _lyricLines;
@@ -637,7 +949,7 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -646,51 +958,59 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut),
                   child: _circleButton(
-                      child: const Icon(Icons.keyboard_arrow_down,
-                          color: Color(0xFF8B5E3C), size: 20)),
+                      child: Icon(Icons.keyboard_arrow_down,
+                          color: const Color(0xFF8B5E3C),
+                          size: 20.r)),
                 ),
-                // "NOW LEARNING" — translated
                 Text(
                   _tr(_currentLanguage, 'now_learning'),
-                  style: const TextStyle(
-                      fontSize: 11,
+                  style: TextStyle(
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF333333),
+                      color: const Color(0xFF333333),
                       letterSpacing: 1.2),
                 ),
-                _circleButton(
-                    child: const Icon(Icons.favorite,
-                        color: Color(0xFFE86A8D), size: 18)),
+                BlocBuilder<FavoritesBloc, FavoritesState>(
+                  builder: (context, favoritesState) {
+                    final isFavorite = favoritesState.favoriteIds.contains(_favoriteVideoData().favoriteId);
+                    return _favoriteCircleButton(
+                      isFavorite: isFavorite,
+                      onTap: _toggleFavorite,
+                    );
+                  },
+                ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
 
-          // Title — translated
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Text(
               _activeContent.getTitle(_currentLanguage),
               textAlign: TextAlign.center,
-              textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
-              style: const TextStyle(
-                  fontSize: 18,
+              textDirection:
+                  isRtl ? TextDirection.rtl : TextDirection.ltr,
+              style: TextStyle(
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFE86A8D)),
+                  color: const Color(0xFFE86A8D)),
             ),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
           Expanded(
             child: ListView.builder(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 28.w, vertical: 8.h),
               itemCount: lines.length,
               itemBuilder: (context, index) {
-                final bool isActive = index == _currentLyricLineIndex;
-                final bool isPast = index < _currentLyricLineIndex;
+                final bool isActive =
+                    index == _currentLyricLineIndex;
+                final bool isPast =
+                    index < _currentLyricLineIndex;
                 final Color lineColor = isActive
                     ? const Color(0xFFE86A8D)
                     : isPast
@@ -700,13 +1020,13 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.easeInOut,
-                  margin:
-                      EdgeInsets.symmetric(vertical: isActive ? 10 : 5),
+                  margin: EdgeInsets.symmetric(
+                      vertical: isActive ? 10.h : 5.h),
                   child: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 400),
                     curve: Curves.easeInOut,
                     style: TextStyle(
-                        fontSize: isActive ? 17 : 13,
+                        fontSize: isActive ? 17.sp : 13.sp,
                         fontWeight: isActive
                             ? FontWeight.w700
                             : FontWeight.w400,
@@ -724,7 +1044,7 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+            padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 28.h),
             child: Column(
               children: [
                 Row(
@@ -732,45 +1052,46 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
                   children: [
                     GestureDetector(
                       onTap: () => _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
+                          duration:
+                              const Duration(milliseconds: 300),
                           curve: Curves.easeInOut),
                       child: Container(
-                          width: 8,
-                          height: 8,
+                          width: 8.r,
+                          height: 8.r,
                           decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: Color(0xFFFFD5E0))),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     Container(
-                        width: 8,
-                        height: 8,
+                        width: 8.r,
+                        height: 8.r,
                         decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             color: Color(0xFFE86A8D))),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
                 GestureDetector(
                   onTap: () => _pageController.previousPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut),
                   child: Container(
-                    width: 64,
-                    height: 64,
+                    width: 64.r,
+                    height: 64.r,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: const Color(0xFFE86A8D),
                       boxShadow: [
                         BoxShadow(
-                            color:
-                                const Color(0xFFE86A8D).withOpacity(0.35),
-                            blurRadius: 16,
+                            color: const Color(0xFFE86A8D)
+                                .withOpacity(0.35),
+                            blurRadius: 16.r,
                             offset: const Offset(0, 8))
                       ],
                     ),
-                    child: const Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 32),
+                    child: Icon(Icons.play_arrow_rounded,
+                        color: Colors.white, size: 32.r),
                   ),
                 ),
               ],
@@ -783,19 +1104,49 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
 
   Widget _circleButton({required Widget child}) {
     return Container(
-      width: 38,
-      height: 38,
+      width: 38.r,
+      height: 38.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.08),
-              blurRadius: 6,
+              blurRadius: 6.r,
               offset: const Offset(0, 2))
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _favoriteCircleButton({
+    required bool isFavorite,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 44.r,
+        height: 44.r,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 6.r,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Icon(
+          isFavorite ? Icons.favorite : Icons.favorite_border,
+          color: isFavorite ? const Color(0xFFE86A8D) : const Color(0xFFE86A8D),
+          size: 20.r,
+        ),
+      ),
     );
   }
 }
@@ -807,11 +1158,11 @@ const audioContent1 = AudioContent(
   urduTitle: 'چھاتی کا کینسر کیا ہے؟',
   romanUrduTitle: 'Chhaati ka Cancer kya hai?',
   subtitle: 'Understanding the basics',
-  audioPath: 'assets/audio/whatisbreastcancer.m4a',
+  audioPath: 'assets/audio/whatisbreastcancer.mp3',
   urduAudioPath: 'assets/audio/whatisbreastcancer_urdu.m4a',
   animationPath:
       'assets/images/Cancer Cell Animation from Bibi Project (1).lottie',
-       scale: 1.9,
+  scale: 1.9,
   offsetXPercent: 0.015,
   offsetYPercent: -0.02,
   urduLyrics: [
@@ -842,7 +1193,10 @@ const audioContent2 = AudioContent(
   urduTitle: 'کیا آپ کو خطرہ ہے؟',
   romanUrduTitle: 'Kya aap ko khatra hai?',
   subtitle: 'When an abnormality is found',
-  audioPath: 'assets/audio/risk.m4a',
+  audioPath: 'assets/audio/risk.mp3',
+  scale: 1.9,
+  offsetXPercent: 0.015,
+  offsetYPercent: -0.02,
   urduAudioPath: 'assets/audio/risk_urdu.m4a',
   animationPath: 'assets/images/family_tree.lottie',
   urduLyrics: [
@@ -867,6 +1221,9 @@ const audioContent3 = AudioContent(
   title: 'Preventive Screening',
   urduTitle: 'احتیاطی اسکریننگ',
   romanUrduTitle: 'Ehtiyati Screening',
+  scale: 2.5,
+  offsetXPercent: 0.015,
+  offsetYPercent: -0.02,
   subtitle: 'Understanding preventive screening',
   audioPath: 'assets/audio/screen.m4a',
   urduAudioPath: 'assets/audio/screen_urdu.m4a',
@@ -897,9 +1254,12 @@ const audioContent4 = AudioContent(
   title: 'How to Treat?',
   urduTitle: 'علاج کیسے کریں؟',
   romanUrduTitle: 'Ilaaj kaise karein?',
+  scale: 1.9,
+  offsetXPercent: 0.015,
+  offsetYPercent: -0.02,
   subtitle: 'Care options after detection',
-  audioPath: 'assets/audio/treat.m4a',
-  urduAudioPath: 'assets/audio/treat_urdu.m4a',
+  audioPath: 'assets/audio/treat.mp3',
+  urduAudioPath: 'assets/audio/treat_urdu.mp3',
   animationPath: 'assets/images/chemotherapy.lottie',
   urduLyrics: [
     'جب مجھے بتایا گیا کہ مجھے کینسر ہے تو میں ڈر گئی تھی لیکن علاج اثر کرتا ہے',
@@ -915,9 +1275,9 @@ const audioContent4 = AudioContent(
   ],
   englishLyrics: [
     'When I was told I had cancer, I was afraid.',
-    'But treatment works — many people recover.',
-    'Surgery, chemotherapy, radiation — each has a role.',
-    'It is a safe way to get the right treatment started.',
+    'But treatment works — I had chemotherapy, surgery, and radiation.',
+    ' It wasn\'t always easy —I lost my hair and felt tired—',
+    ' but it shrank the tumor and saved my life.',
   ],
 );
 
@@ -926,6 +1286,9 @@ const audioContent5 = AudioContent(
   urduTitle: 'تصدیق کیسے کریں؟',
   romanUrduTitle: 'Tasdeeq kaise karein?',
   subtitle: 'Tests and checks to know for sure',
+  scale: 1.9,
+  offsetXPercent: 0.018,
+  offsetYPercent: -0.02,
   audioPath: 'assets/audio/biopsy.m4a',
   urduAudioPath: 'assets/audio/how_to_confirm_urdu.m4a',
   animationPath: 'assets/images/ultrasound.lottie',
@@ -955,6 +1318,9 @@ const audioContent6 = AudioContent(
   romanUrduTitle: 'Bachao kaise karein?',
   subtitle: 'Simple steps to lower the risk',
   audioPath: 'assets/audio/prevent.m4a',
+  scale: 2.9,
+  offsetXPercent: 0.015,
+  offsetYPercent: -0.02,
   urduAudioPath: 'assets/audio/how_to_prevent_urdu.m4a',
   animationPath: 'assets/images/Bibi_Onboarding_Right.lottie',
   urduLyrics: [
@@ -981,8 +1347,11 @@ const audioContent7 = AudioContent(
   title: 'How to Support?',
   urduTitle: 'مدد کیسے کریں؟',
   romanUrduTitle: 'Madad kaise karein?',
+  scale: 2.9,
+  offsetXPercent: 0.015,
+  offsetYPercent: -0.02,
   subtitle: 'Ways to help with care and comfort',
-  audioPath: 'assets/audio/support.m4a',
+  audioPath: 'assets/audio/support.mp3',
   urduAudioPath: 'assets/audio/support_urdu.m4a',
   animationPath: 'assets/images/Bibi_Onboarding_Right.lottie',
   urduLyrics: [
@@ -1005,8 +1374,6 @@ const audioContent7 = AudioContent(
   ],
 );
 
-/// Convenience list — pass this as [allContent] when opening AudioPlayerPage
-/// so prev/next navigation works.
 const List<AudioContent> allAudioContent = [
   audioContent1,
   audioContent2,

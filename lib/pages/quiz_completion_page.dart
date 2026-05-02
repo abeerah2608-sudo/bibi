@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../bloc/bloc_exports.dart';
 import '../services/language_strings.dart';
 import '../services/quiz_service.dart';
@@ -11,12 +12,14 @@ class QuizCompletionPage extends StatelessWidget {
   final int quizId;
   final int completedQuestions;
   final int totalQuestions;
+  final int? correctAnswers;
 
   const QuizCompletionPage({
     super.key,
     required this.quizId,
     required this.completedQuestions,
     required this.totalQuestions,
+    this.correctAnswers,
   });
 
 void _goToDashboard(BuildContext context) {
@@ -36,9 +39,10 @@ void _goToDashboard(BuildContext context) {
           currentLanguage = state.language;
         }
 
+        final score = correctAnswers ?? completedQuestions;
         final percentage =
-            ((completedQuestions / totalQuestions) * 100).toStringAsFixed(0);
-        final isPerfect = completedQuestions == totalQuestions;
+          ((completedQuestions / totalQuestions) * 100).toStringAsFixed(0);
+        final isPerfect = score == totalQuestions;
 
         return Scaffold(
           backgroundColor: const Color(0xFFFCEEF3),
@@ -52,7 +56,7 @@ void _goToDashboard(BuildContext context) {
                 child: ClipPath(
                   clipper: _CurvedBottomClipper(),
                   child: Container(
-                    height: 230,
+                    height: 230.h,
                     color: const Color(0xFFFFA6BD),
                   ),
                 ),
@@ -60,21 +64,21 @@ void _goToDashboard(BuildContext context) {
 
               // ── Back arrow
               Positioned(
-                top: 48,
-                left: 20,
+                top: 48.h,
+                left: 20.w,
                 child: GestureDetector(
                   onTap: () => _goToDashboard(context),
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 36.w,
+                    height: 36.h,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.35),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back,
                       color: Colors.white,
-                      size: 18,
+                      size: 18.sp,
                     ),
                   ),
                 ),
@@ -83,11 +87,11 @@ void _goToDashboard(BuildContext context) {
               // ── Main content
               SafeArea(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  padding: EdgeInsets.symmetric(horizontal: 28.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 48),
+                      SizedBox(height: 48.h),
 
                       // ── Floating completion circle + white card
                       Stack(
@@ -95,11 +99,11 @@ void _goToDashboard(BuildContext context) {
                         alignment: Alignment.topCenter,
                         children: [
                           Container(
-                            margin: const EdgeInsets.only(top: 56),
-                            padding: const EdgeInsets.fromLTRB(28, 64, 28, 28),
+                            margin: EdgeInsets.only(top: 56.h),
+                            padding: EdgeInsets.fromLTRB(28.w, 64.h, 28.w, 28.h),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(28),
+                              borderRadius: BorderRadius.circular(28.r),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0xFFFFA6BD).withOpacity(0.25),
@@ -112,15 +116,20 @@ void _goToDashboard(BuildContext context) {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _StatRow(
-                                  label: 'Completion',
-                                  value: '$percentage%',
+                                  label: 'Score',
+                                  value: '$score / $totalQuestions',
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: 16.h),
                                 const Divider(
                                   color: Color(0xFFF5DCE5),
                                   thickness: 1,
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: 16.h),
+                                _StatRow(
+                                  label: 'Completion',
+                                  value: '$percentage%',
+                                ),
+                                SizedBox(height: 16.h),
                                 _StatRow(
                                   label: 'Total Question',
                                   value: totalQuestions.toString().padLeft(2, '0'),
@@ -132,32 +141,32 @@ void _goToDashboard(BuildContext context) {
                             top: 0,
                             child: _CompletionCircle(
                               percentage: percentage,
-                              size: 104,
+                              size: 104.w,
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 36),
+                      SizedBox(height: 36.h),
 
                       Text(
                         isPerfect
                             ? 'Consult a doctor or a\nhealth worker!'
                             : 'Keep learning to\nstay informed!',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 26,
+                        style: TextStyle(
+                          fontSize: 26.sp,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF5D3A3A),
+                          color: const Color(0xFF5D3A3A),
                           height: 1.35,
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32.h),
 
-                      Center(child: _GiftIcon(size: 110)),
+                      Center(child: _GiftIcon(size: 110.w)),
 
-                      const SizedBox(height: 40),
+                      SizedBox(height: 40.h),
 
                       // ── Retake button
                      ElevatedButton(
@@ -174,21 +183,21 @@ void _goToDashboard(BuildContext context) {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE86A8D),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(18.r),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          padding: EdgeInsets.symmetric(vertical: 15.h),
                           elevation: 4,
                           shadowColor: const Color(0xFFE86A8D).withOpacity(0.4),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.refresh, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
+                            Icon(Icons.refresh, color: Colors.white, size: 20.sp),
+                            SizedBox(width: 8.w),
                             Text(
                               'Retake Quiz',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
@@ -197,39 +206,39 @@ void _goToDashboard(BuildContext context) {
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12.h),
 
                       // ── Back to dashboard button
                       OutlinedButton(
                         onPressed: () => _goToDashboard(context),
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(18.r),
                           ),
                           side: const BorderSide(
                             color: Color(0xFFE86A8D),
                             width: 2,
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          padding: EdgeInsets.symmetric(vertical: 15.h),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.home, color: Color(0xFFE86A8D), size: 20),
-                            SizedBox(width: 8),
+                            Icon(Icons.home, color: const Color(0xFFE86A8D), size: 20.sp),
+                            SizedBox(width: 8.w),
                             Text(
                               'Back to Dashboard',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFFE86A8D),
+                                color: const Color(0xFFE86A8D),
                               ),
                             ),
                           ],
                         ),
                       ),
 
-                      const SizedBox(height: 28),
+                      SizedBox(height: 28.h),
                     ],
                   ),
                 ),
@@ -269,36 +278,36 @@ class _CompletionCircle extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Completion',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 11.sp,
               fontWeight: FontWeight.w500,
-              color: Color(0xFFB07A8A),
+              color: const Color(0xFFB07A8A),
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 percentage,
-                style: const TextStyle(
-                  fontSize: 28,
+                style: TextStyle(
+                  fontSize: 28.sp,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF5D3A3A),
+                  color: const Color(0xFF5D3A3A),
                   height: 1.1,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 4),
+              Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
                 child: Text(
                   '%',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF5D3A3A),
+                    color: const Color(0xFF5D3A3A),
                   ),
                 ),
               ),
@@ -323,30 +332,30 @@ class _StatRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 10.w,
+          height: 10.h,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             color: Color(0xFFE86A8D),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12.w),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: 18.sp,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF5D3A3A),
+                color: const Color(0xFF5D3A3A),
               ),
             ),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFFB07A8A),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: const Color(0xFFB07A8A),
                 fontWeight: FontWeight.w500,
               ),
             ),
